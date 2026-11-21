@@ -238,11 +238,12 @@ def slice_media_buffer(source_video, start_sec, duration_sec, output_path, dry_r
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     cmd = [
         "ffmpeg", "-y",
-        "-ss", f"{start_sec:.2f}",
         "-i", source_video,
+        "-ss", f"{start_sec:.2f}",
         "-t", f"{duration_sec:.2f}",
         "-vf", "setpts=PTS-STARTPTS",
         "-af", "asetpts=PTS-STARTPTS",
+        "-avoid_negative_ts", "make_zero",
         "-c:v", "libx264",
         "-preset", "veryfast",
         "-crf", "18",
@@ -308,10 +309,12 @@ def slice_and_reframe_clip(source_video, trigger_time_sec, output_path, pre_roll
 
     cmd = [
         "ffmpeg", "-y",
-        "-ss", f"{start_sec:.2f}",
         "-i", source_video,
+        "-ss", f"{start_sec:.2f}",
         "-t", f"{duration:.2f}",
-        "-vf", vf_filter,
+        "-vf", f"{vf_filter},setpts=PTS-STARTPTS",
+        "-af", "asetpts=PTS-STARTPTS",
+        "-avoid_negative_ts", "make_zero",
         "-c:v", "libx264",
         "-preset", "veryfast",
         "-crf", "20",

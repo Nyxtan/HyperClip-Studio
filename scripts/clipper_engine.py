@@ -297,7 +297,7 @@ def build_layout_filter(layout, ass_file, cam_crop=(360, 270, 15, 440)):
         # Streamer Facecam top (1080x600), Gameplay starts immediately below (1080x1320 full footage)
         # Ratio for 1080x1320 is 0.818: crop 884x1080 from center of 1920x1080 source
         return (
-            f"[0:v]scale=1920:1080:flags=lanczos,split=2[v_cam_in][v_game_in];"
+            f"[0:v]setpts=PTS-STARTPTS,scale=1920:1080:flags=lanczos,split=2[v_cam_in][v_game_in];"
             f"[v_cam_in]crop={cw}:{ch}:{cx}:{cy},scale=1080:600:flags=lanczos[cam];"
             f"[v_game_in]crop=884:1080:518:0,scale=1080:1320:flags=lanczos[game];"
             f"[cam][game]vstack=inputs=2[v_split];"
@@ -306,7 +306,7 @@ def build_layout_filter(layout, ass_file, cam_crop=(360, 270, 15, 440)):
     elif layout in ['pip', 'B']:
         # Corner PIP: Full 9:16 vertical gameplay + floating bordered webcam at Top-Right (612, 80)
         return (
-            f"[0:v]scale=1920:1080:flags=lanczos,split=2[v_bg_in][v_pip_in];"
+            f"[0:v]setpts=PTS-STARTPTS,scale=1920:1080:flags=lanczos,split=2[v_bg_in][v_pip_in];"
             f"[v_bg_in]crop=607:1080:656:0,scale=1080:1920:flags=lanczos[bg];"
             f"[v_pip_in]crop={cw}:{ch}:{cx}:{cy},scale=420:233:flags=lanczos,pad=428:241:4:4:white[cam_pip];"
             f"[bg][cam_pip]overlay=612:80[v_pip];"
@@ -315,7 +315,7 @@ def build_layout_filter(layout, ass_file, cam_crop=(360, 270, 15, 440)):
     elif layout in ['circle', 'circle_pip', 'C']:
         # Circular PIP: Full 9:16 vertical gameplay + floating circular webcam with animated completion timer ring
         return (
-            f"[0:v]scale=1920:1080:flags=lanczos,split=2[v_bg_in][v_sq_in];"
+            f"[0:v]setpts=PTS-STARTPTS,scale=1920:1080:flags=lanczos,split=2[v_bg_in][v_sq_in];"
             f"[v_bg_in]crop=607:1080:656:0,scale=1080:1920:flags=lanczos[bg];"
             f"[v_sq_in]crop={ch}:{ch}:{cx + (cw-ch)//2}:{cy},scale=360:360:flags=lanczos[cam_sq];"
             f"[1:v]scale=360:360[mask];"
@@ -328,7 +328,7 @@ def build_layout_filter(layout, ass_file, cam_crop=(360, 270, 15, 440)):
     else:
         # Blurred Backdrop: Aspect-fill 3414x1920 center-crop 1080x1920 blurred + center 16:9 gameplay + top centered webcam
         return (
-            f"[0:v]scale=1920:1080:flags=lanczos,split=3[v_blur_in][v_game_in][v_top_in];"
+            f"[0:v]setpts=PTS-STARTPTS,scale=1920:1080:flags=lanczos,split=3[v_blur_in][v_game_in][v_top_in];"
             f"[v_blur_in]scale=3414:1920:flags=bilinear,crop=1080:1920,boxblur=25:5[bg_blur];"
             f"[v_game_in]scale=1080:608:flags=lanczos[center_game];"
             f"[v_top_in]crop={cw}:{ch}:{cx}:{cy},scale=540:300:flags=lanczos,pad=548:308:4:4:white[top_cam];"
@@ -532,7 +532,9 @@ def render_clip(input_file, layout="split", font="glow", output=None, gemini=Fal
         else:
             print(f"[AI Clipper Suite] URL provided; proceeding with direct stream capture.")
 
-    if not os.path.isabs(input_file) and not input_file.startswith("http"):
+    if os.path.exists(input_file):
+        input_file = os.path.abspath(input_file)
+    elif not os.path.isabs(input_file) and not input_file.startswith("http"):
         # Check in root or in assets/demo
         candidates = [
             os.path.join(ROOT_DIR, input_file),
@@ -615,6 +617,8 @@ def render_clip(input_file, layout="split", font="glow", output=None, gemini=Fal
     cmd.extend([
         "-filter_complex", filter_complex,
         "-map", "[outv]", "-map", "0:a?",
+        "-af", "asetpts=PTS-STARTPTS",
+        "-avoid_negative_ts", "make_zero",
         "-c:v", "libx264", "-preset", "fast", "-crf", "18", "-r", "60",
         "-c:a", "aac", "-b:a", "192k",
         "-shortest",

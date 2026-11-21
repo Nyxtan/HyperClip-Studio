@@ -938,6 +938,7 @@ def build_video_filter(ass_name, crop=False, crop_offset=0.5, source_roi=None, l
 def cut(chunk_path, words, start, length, out_mp4, credit, crop=False, crop_offset=0.5,
         source_roi=None, caption_margin_v=400, layout="pip", pan_keys=None, face_box=None,
         font="beast", ring_color="auto"):
+    out_mp4 = os.path.abspath(out_mp4)
     # If using modern locked presets (circle, split, blur), route directly through unified clipper_engine
     if layout in {"circle", "circle_pip", "split", "blur"}:
         try:
@@ -946,12 +947,17 @@ def cut(chunk_path, words, start, length, out_mp4, credit, crop=False, crop_offs
             # Format words list for clipper_engine
             words_data = [{"start": round(w[0] - start, 3), "end": round(w[1] - start, 3), "word": str(w[2])}
                           for w in words if start <= w[0] < start + length]
-            # Slice audio-video chunk to exact clip window
-            tmp_slice = os.path.join(os.path.dirname(out_mp4), f"tmp_slice_{os.getpid()}.mp4")
+            # Slice audio-video chunk to exact clip window with frame-accurate seek & PTS alignment
+            tmp_slice = os.path.abspath(os.path.join(os.path.dirname(out_mp4), f"tmp_slice_{os.getpid()}.mp4"))
             subprocess.run([
                 "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
-                "-ss", f"{start:.2f}", "-i", os.path.abspath(chunk_path), "-t", f"{length:.2f}",
-                "-c:v", "libx264", "-c:a", "aac", tmp_slice
+                "-i", os.path.abspath(chunk_path),
+                "-ss", f"{start:.2f}", "-t", f"{length:.2f}",
+                "-vf", "setpts=PTS-STARTPTS",
+                "-af", "asetpts=PTS-STARTPTS",
+                "-avoid_negative_ts", "make_zero",
+                "-c:v", "libx264", "-preset", "veryfast", "-crf", "18",
+                "-c:a", "aac", "-b:a", "192k", tmp_slice
             ], check=True)
             render_clip(
                 input_file=tmp_slice,
@@ -981,28 +987,34 @@ def cut(chunk_path, words, start, length, out_mp4, credit, crop=False, crop_offs
 
     if bgm_path and os.path.isfile(bgm_path):
         # Mix subtle background beat at 12% volume (-18dB sweet spot) behind commentary
-        r = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-ss", f"{start:.2f}",
+        r = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
                             "-i", os.path.abspath(chunk_path),
                             "-stream_loop", "-1", "-i", bgm_path,
+                            "-ss", f"{start:.2f}",
                             "-t", f"{length}",
-                            "-filter_complex", f"[0:v]{fg}[v]; [1:a]volume=0.12[bgm]; [0:a][bgm]amix=inputs=2:duration=first:dropout_transition=2,asetpts=PTS-STARTPTS[aout]",
+                            "-filter_complex", f"[0:v]{fg},setpts=PTS-STARTPTS[v]; [1:a]volume=0.12[bgm]; [0:a][bgm]amix=inputs=2:duration=first:dropout_transition=2,asetpts=PTS-STARTPTS[aout]",
                             "-map", "[v]",
                             "-map", "[aout]",
+                            "-avoid_negative_ts", "make_zero",
                             "-c:v", "libx264", "-preset", "faster",
                             "-crf", "18", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart",
                             os.path.basename(out_mp4)], cwd=d, capture_output=True, text=True)
         if r.returncode:
             # Fallback to standard render if complex filter had syntax mismatch
-            r = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-ss", f"{start:.2f}",
-                                "-i", os.path.abspath(chunk_path), "-t", f"{length}",
+            r = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+                                "-i", os.path.abspath(chunk_path),
+                                "-ss", f"{start:.2f}", "-t", f"{length}",
                                 "-filter_complex", fg, "-af", "asetpts=PTS-STARTPTS",
+                                "-avoid_negative_ts", "make_zero",
                                 "-c:v", "libx264", "-preset", "faster",
                                 "-crf", "18", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart",
                                 os.path.basename(out_mp4)], cwd=d, capture_output=True, text=True)
     else:
-        r = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-ss", f"{start:.2f}",
-                            "-i", os.path.abspath(chunk_path), "-t", f"{length}",
+        r = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+                            "-i", os.path.abspath(chunk_path),
+                            "-ss", f"{start:.2f}", "-t", f"{length}",
                             "-filter_complex", fg, "-af", "asetpts=PTS-STARTPTS",
+                            "-avoid_negative_ts", "make_zero",
                             "-c:v", "libx264", "-preset", "faster",
                             "-crf", "18", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart",
                             os.path.basename(out_mp4)], cwd=d, capture_output=True, text=True)
