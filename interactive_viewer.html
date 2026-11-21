@@ -1180,8 +1180,8 @@
       </p>
 
       <div class="hero-btn-row">
-        <button class="btn-purple-main" onclick="scrollToPrompt()">
-          ▶ Copy Agent Setup Prompt
+        <button class="btn-purple-main" onclick="copyRepoInstallPrompt()">
+          ⚡ Copy One-Click Install Prompt
         </button>
         <button class="btn-dark-secondary" onclick="scrollToSection('reposSection')">
           + Explore GitHub Repos
@@ -1578,14 +1578,14 @@
           </h2>
         </div>
         <div class="section-subtext">
-          This prompt contains the exact clone links, setup steps, Gemini API hook prompts, and auto-poster configurations. Your agent executes everything automatically!
+          Generate and copy the exact execution command based on your selected Layout, Font, Resolution, and Pacing. Zero reinstall needed for repeat clipping!
         </div>
       </div>
 
       <div class="prompt-box">
         <div class="prompt-box-top">
           <div>
-            <div class="prompt-box-title">AUTONOMOUS SETUP PROMPT</div>
+            <div class="prompt-box-title">CLIP RUNNER & PRESET PROMPT</div>
             <div class="selection-summary">
               Repo: <span id="summaryRepo">HyperClip-Studio</span> • Layout: <span id="summaryLayout">50/50 Vertical Split</span> • Subtitles: <span id="summaryFont">The Bold Font (Hormozi)</span> • Quality: <span id="summaryQuality">1080x1920 Full HD</span> • Mode: <span id="summaryMode">Live Chat Spikes</span> • Pacing: <span id="summaryPacing">Safe Anti-Spam Delay</span>
             </div>
@@ -1799,38 +1799,56 @@ if ($latest) {
 
       document.getElementById('powershellRunbookCode').innerText = psDaemonScript;
 
-      const promptTemplate = `You are an autonomous AI coding agent. Set up and run the stream clipping pipeline using HyperClip Studio:
+            let qualityFlag = 'max';
+      if (selectedResolution === '4k') qualityFlag = '4k';
+      else if (selectedResolution === '720p') qualityFlag = '720p';
 
-Target Configuration:
-- Repository: https://github.com/Nyxtan/HyperClip-Studio.git
-- Layout: ${selectedLayoutName} (Flag: --layout ${layoutFlag})
-- Typography: ${selectedFontLabel} (Flag: --font ${selectedFontKey})
-- Pipeline Mode: ${selectedPipelineModeLabel}
+      const promptTemplate = `You are an autonomous AI coding agent. Execute the stream clipping engine in HyperClip Studio with the following configuration:
+
+Configuration:
+- Layout: ${selectedLayoutName} (--layout ${layoutFlag})
+- Typography: ${selectedFontLabel} (--font ${selectedFontKey})
+- Quality: ${selectedResolutionLabel} (--quality ${qualityFlag})
+- Moment Detection: ${selectedPipelineModeLabel} (-MomentSource ${selectedPipelineMode === 'live' ? 'chat' : 'vod'})
 - Pacing: ${selectedPacingStrategyLabel}
 
-Instructions:
-1. Clone the repository and navigate into it:
+Run Command:
+.\\autopilot.ps1 -Url "https://www.youtube.com/watch?v=STREAM_ID" -Layout "${layoutFlag}" -Font "${selectedFontKey}" -Quality "${qualityFlag}" -MomentSource "${selectedPipelineMode === 'live' ? 'chat' : 'vod'}" -ClipLen 30
+
+Daemon / Auto-Publisher:
+${psDaemonScript}
+
+Process the stream and notify me with the output file path when done!`;
+
+      document.getElementById('masterPromptCode').innerText = promptTemplate;
+    }
+
+        function copyRepoInstallPrompt(e) {
+      if (e) e.stopPropagation();
+      const installPrompt = `You are an autonomous AI coding agent. Clone, setup dependencies, and verify the HyperClip Studio stream clipping engine on my computer:
+
+1. Clone Repository:
    git clone https://github.com/Nyxtan/HyperClip-Studio.git
    cd HyperClip-Studio
 
-2. Setup virtual environment and dependencies:
+2. Setup Python Virtual Environment:
    python -m venv .venv
    # Windows PowerShell:
    .\\.venv\\Scripts\\Activate.ps1
    # macOS/Linux:
    source .venv/bin/activate
+
+3. Install Dependencies:
    pip install -r requirements.txt
 
-3. Execute the pipeline:
-   - For an automated end-to-end run with autopilot:
-     .\\autopilot.ps1 -Url "https://www.youtube.com/watch?v=STREAM_ID" -Layout "${layoutFlag}" -Font "${selectedFontKey}" -MomentSource "${selectedPipelineMode === 'live' ? 'chat' : 'vod'}" -ClipLen 30
+4. Verify Installation:
+   .\\run.ps1 clip.py --help
 
-   - Or run the background daemon directly:
-${psDaemonScript}
+Notify me once the installation and environment verification are complete!`;
 
-Notify me with the output path once the first clip is rendered!`;
-
-      document.getElementById('masterPromptCode').innerText = promptTemplate;
+      navigator.clipboard.writeText(installPrompt).then(() => {
+        alert("✅ HyperClip Install Prompt Copied! Paste it directly into your AI Agent (Cursor, Devin, Claude, Antigravity) to install.");
+      });
     }
 
     function copyMasterPrompt() {
