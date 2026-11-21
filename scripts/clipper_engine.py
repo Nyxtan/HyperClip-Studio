@@ -296,21 +296,23 @@ def build_layout_filter(layout, ass_file, cam_crop=(360, 270, 15, 440)):
     if layout in ['split', 'A']:
         # Streamer Facecam top (1080x600), Gameplay starts immediately below (1080x1320 full footage)
         # Ratio for 1080x1320 is 0.818: crop 884x1080 from center of 1920x1080 source
+        # Preserve facecam aspect ratio (avoid horizontal stretching if crop is square)
         return (
             f"[0:v]setpts=PTS-STARTPTS,scale=1920:1080:flags=lanczos,split=2[v_cam_in][v_game_in];"
-            f"[v_cam_in]crop={cw}:{ch}:{cx}:{cy},scale=1080:600:flags=lanczos[cam];"
+            f"[v_cam_in]crop={cw}:{ch}:{cx}:{cy},scale=1080:600:force_original_aspect_ratio=increase:flags=lanczos,crop=1080:600[cam];"
             f"[v_game_in]crop=884:1080:518:0,scale=1080:1320:flags=lanczos[game];"
             f"[cam][game]vstack=inputs=2[v_split];"
-            f"[v_split]{fonts_arg}[outv]"
+            f"[v_split]{fonts_arg},setsar=1:1[outv]"
         )
     elif layout in ['pip', 'B']:
         # Corner PIP: Full 9:16 vertical gameplay + floating bordered webcam at Top-Right (612, 80)
+        # Preserve facecam aspect ratio (avoid horizontal stretching if crop is square)
         return (
             f"[0:v]setpts=PTS-STARTPTS,scale=1920:1080:flags=lanczos,split=2[v_bg_in][v_pip_in];"
             f"[v_bg_in]crop=607:1080:656:0,scale=1080:1920:flags=lanczos[bg];"
-            f"[v_pip_in]crop={cw}:{ch}:{cx}:{cy},scale=420:233:flags=lanczos,pad=428:241:4:4:white[cam_pip];"
+            f"[v_pip_in]crop={cw}:{ch}:{cx}:{cy},scale=420:233:force_original_aspect_ratio=increase:flags=lanczos,crop=420:233,pad=428:241:4:4:white[cam_pip];"
             f"[bg][cam_pip]overlay=612:80[v_pip];"
-            f"[v_pip]{fonts_arg}[outv]"
+            f"[v_pip]{fonts_arg},setsar=1:1[outv]"
         )
     elif layout in ['circle', 'circle_pip', 'C']:
         # Circular PIP: Full 9:16 vertical gameplay + floating circular webcam with animated completion timer ring
@@ -327,14 +329,15 @@ def build_layout_filter(layout, ass_file, cam_crop=(360, 270, 15, 440)):
         )
     else:
         # Blurred Backdrop: Aspect-fill 3414x1920 center-crop 1080x1920 blurred + center 16:9 gameplay + top centered webcam
+        # Preserve facecam aspect ratio (avoid horizontal stretching if crop is square)
         return (
             f"[0:v]setpts=PTS-STARTPTS,scale=1920:1080:flags=lanczos,split=3[v_blur_in][v_game_in][v_top_in];"
             f"[v_blur_in]scale=3414:1920:flags=bilinear,crop=1080:1920,boxblur=25:5[bg_blur];"
             f"[v_game_in]scale=1080:608:flags=lanczos[center_game];"
-            f"[v_top_in]crop={cw}:{ch}:{cx}:{cy},scale=540:300:flags=lanczos,pad=548:308:4:4:white[top_cam];"
+            f"[v_top_in]crop={cw}:{ch}:{cx}:{cy},scale=540:300:force_original_aspect_ratio=increase:flags=lanczos,crop=540:300,pad=548:308:4:4:white[top_cam];"
             f"[bg_blur][center_game]overlay=0:656[v_mid];"
             f"[v_mid][top_cam]overlay=266:250[v_comp];"
-            f"[v_comp]{fonts_arg}[outv]"
+            f"[v_comp]{fonts_arg},setsar=1:1[outv]"
         )
 
 def get_media_duration(file_path):
