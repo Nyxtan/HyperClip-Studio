@@ -1744,7 +1744,7 @@
       updatePromptCode();
     }
 
-        function updatePromptCode() {
+            function updatePromptCode() {
       document.getElementById('summaryRepo').innerText = selectedRepoName;
       document.getElementById('summaryLayout').innerText = selectedLayoutName + ' (Mode ' + selectedLayoutMode + ')';
       document.getElementById('summaryFont').innerText = selectedFontLabel;
@@ -1752,26 +1752,23 @@
       document.getElementById('summaryMode').innerText = selectedPipelineModeLabel;
       document.getElementById('summaryPacing').innerText = selectedPacingStrategyLabel;
 
-      // Map Mode to CLI flag: A -> split, B -> pip, C -> blur, D -> circle
       let layoutFlag = 'split';
       if (selectedLayoutMode.toLowerCase() === 'b') layoutFlag = 'pip';
       else if (selectedLayoutMode.toLowerCase() === 'c') layoutFlag = 'blur';
       else if (selectedLayoutMode.toLowerCase() === 'd') layoutFlag = 'circle';
 
-      // Dynamic PowerShell Script depending on Pacing & Mode
       let psDaemonScript = '';
       if (selectedPacingStrategy === 'continuous') {
         psDaemonScript = `# === 24/7 UNATTENDED CONTINUOUS DAEMON ===
 # Monitors stream and auto-publishes clips in the background
 while ($true) {
   Write-Host "[DAEMON] Monitoring stream highlights at $(Get-Date)..." -ForegroundColor Cyan
-  .\run.ps1 clip.py "https://www.youtube.com/watch?v=STREAM_ID" --layout ${layoutFlag} --font ${selectedFontKey} --moment-source chat --clip-len 30
+  .\\run.ps1 clip.py "https://www.youtube.com/watch?v=STREAM_ID" --layout ${layoutFlag} --font ${selectedFontKey} --moment-source chat --clip-len 30
 
-  # Auto-schedule newly rendered clips
   Get-ChildItem -Path ./output/*.mp4 | ForEach-Object {
     $meta = [System.IO.Path]::ChangeExtension($_.FullName, ".json")
     if (Test-Path $meta) {
-      .\run.ps1 publish.py $_.FullName --publish --unattended
+      .\\run.ps1 publish.py $_.FullName --publish --unattended
     }
   }
   Start-Sleep -Seconds 60
@@ -1780,23 +1777,23 @@ while ($true) {
         psDaemonScript = `# === SAFE HUMAN-PACED DAEMON (ANTI-SPAM BYPASS) ===
 # Spaces out publishing by 90-180 minutes to avoid platform shadowbans
 Write-Host "[ANTI-SPAM ACTIVE] Running with human-like delays" -ForegroundColor Green
-.\run.ps1 clip.py "https://www.youtube.com/watch?v=STREAM_ID" --layout ${layoutFlag} --font ${selectedFontKey} --moment-source chat --clip-len 30
+.\\run.ps1 clip.py "https://www.youtube.com/watch?v=STREAM_ID" --layout ${layoutFlag} --font ${selectedFontKey} --moment-source chat --clip-len 30
 
 $latest = Get-ChildItem -Path ./output/*.mp4 | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 if ($latest) {
   $delayMin = Get-Random -Minimum 90 -Maximum 180
   $targetTime = (Get-Date).AddMinutes($delayMin).ToString("yyyy-MM-ddTHH:mm:sszzz")
   Write-Host "[Schedule] Queueing publication for $targetTime ($delayMin min delay)..." -ForegroundColor Yellow
-  .\run.ps1 publish.py $latest.FullName --publish --unattended --scheduled-for $targetTime
+  .\\run.ps1 publish.py $latest.FullName --publish --unattended --scheduled-for $targetTime
 }`;
       } else {
         psDaemonScript = `# === SCHEDULED PEAK TRAFFIC WINDOWS ===
 # Queues clips strictly for evening prime-time slots (18:00 - 22:00 IST)
-.\run.ps1 clip.py "https://www.youtube.com/watch?v=STREAM_ID" --layout ${layoutFlag} --font ${selectedFontKey} --moment-source chat --clip-len 30
+.\\run.ps1 clip.py "https://www.youtube.com/watch?v=STREAM_ID" --layout ${layoutFlag} --font ${selectedFontKey} --moment-source chat --clip-len 30
 $latest = Get-ChildItem -Path ./output/*.mp4 | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 if ($latest) {
   $primeTime = (Get-Date -Hour 19 -Minute 30 -Second 0).ToString("yyyy-MM-ddTHH:mm:sszzz")
-  .\run.ps1 publish.py $latest.FullName --publish --unattended --scheduled-for $primeTime
+  .\\run.ps1 publish.py $latest.FullName --publish --unattended --scheduled-for $primeTime
 }`;
       }
 
@@ -1819,14 +1816,14 @@ Instructions:
 2. Setup virtual environment and dependencies:
    python -m venv .venv
    # Windows PowerShell:
-   .\.venv\Scripts\Activate.ps1
+   .\\.venv\\Scripts\\Activate.ps1
    # macOS/Linux:
    source .venv/bin/activate
    pip install -r requirements.txt
 
 3. Execute the pipeline:
    - For an automated end-to-end run with autopilot:
-     .\autopilot.ps1 -Url "https://www.youtube.com/watch?v=STREAM_ID" -Layout "${layoutFlag}" -Font "${selectedFontKey}" -MomentSource "${selectedPipelineMode === 'live' ? 'chat' : 'vod'}" -ClipLen 30
+     .\\autopilot.ps1 -Url "https://www.youtube.com/watch?v=STREAM_ID" -Layout "${layoutFlag}" -Font "${selectedFontKey}" -MomentSource "${selectedPipelineMode === 'live' ? 'chat' : 'vod'}" -ClipLen 30
 
    - Or run the background daemon directly:
 ${psDaemonScript}
