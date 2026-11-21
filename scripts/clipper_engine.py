@@ -249,10 +249,13 @@ def detect_streamer_facecam(video_path):
             med_h = int(np.median([d[3] for d in detections]) * sy)
 
             center_x = med_x + med_w // 2
-            center_y = med_y + med_h // 2
+            # Offset slightly upwards towards eyes/forehead so chin and neck don't crowd bottom
+            center_y = med_y + int(med_h * 0.42)
 
-            cam_size = int(max(med_w, med_h) * 2.8)
-            cam_size = max(240, min(480, cam_size))
+            # Smart Tight Zoom for Circular PIP:
+            # 1.7x face size perfectly frames head & face without showing unwanted webcam borders/overlays
+            cam_size = int(max(med_w, med_h) * 1.75)
+            cam_size = max(180, min(380, cam_size))
 
             crop_x = max(0, min(1920 - cam_size, center_x - cam_size // 2))
             crop_y = max(0, min(1080 - cam_size, center_y - cam_size // 2))
