@@ -475,7 +475,23 @@ def generate_gemini_metadata(transcript_text, api_key=None):
             return json.loads(clean)
     except Exception as e:
         print(f"[Gemini Error]: {e}. Falling back to default viral templates.")
-        return generate_gemini_metadata(transcript_text, api_key="")
+        return {
+            "title": "CRAZY GTA 6 MOMENT! 🔥",
+            "youtube_shorts": {
+                "title": "CRAZY GTA 6 MOMENT! 🔥 #shorts",
+                "description": "Insane live stream reaction clip! Watch till the end! #shorts #gta6 #gaming",
+                "tags": ["shorts", "gta6", "gaming", "funny", "reaction"]
+            },
+            "instagram_reels": {
+                "caption": "Bro had no idea what was coming 💀 Who else is waiting for GTA 6? Drop a comment below! 👇\n.\n#gta6 #gamingcommunity #reelsviral",
+                "hashtags": ["#gta6", "#gamingmemes", "#viralreels"]
+            },
+            "tiktok": {
+                "hook": "HE ACTUALLY DID THIS ON STREAM 😭",
+                "tags": ["#gta6", "#fyp", "#foryou", "#trending"]
+            },
+            "hook_line_3s": "Wait until you see what happened right here..."
+        }
 
 # -------------------------------------------------------------
 # 5. MAIN CLI DRIVER
