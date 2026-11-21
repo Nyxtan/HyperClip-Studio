@@ -323,7 +323,7 @@ def build_layout_filter(layout, ass_file, cam_crop=(360, 270, 15, 440)):
             f"[cam_sq][mask]alphamerge[cam_circle];"
             f"[cam_circle][timer_ring]overlay=0:0[cam_ring];"
             f"[bg][cam_ring]overlay=660:80[v_circ];"
-            f"[v_circ]{fonts_arg}[outv]"
+            f"[v_circ]{fonts_arg},setsar=1:1[outv]"
         )
     else:
         # Blurred Backdrop: Aspect-fill 3414x1920 center-crop 1080x1920 blurred + center 16:9 gameplay + top centered webcam
