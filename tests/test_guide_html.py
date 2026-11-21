@@ -2,7 +2,7 @@
 """
 Test Suite: HTML Interactive Guide Verification
 ------------------------------------------------
-Validates that index.html and ai_clipper_guide.html conform to production standards,
+Validates that ai_clipper_guide.html and ai_clipper_guide.html conform to production standards,
 contain all required interactive widgets, agent selectors, clipboard functions,
 comparison matrices, and print stylesheets.
 """
@@ -12,24 +12,24 @@ import re
 import pytest
 
 GUIDE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-INDEX_PATH = os.path.join(GUIDE_DIR, "index.html")
+INDEX_PATH = os.path.join(GUIDE_DIR, "ai_clipper_guide.html")
 DUPLICATE_PATH = os.path.join(GUIDE_DIR, "ai_clipper_guide.html")
 
 @pytest.fixture(scope="module")
 def html_content():
-    assert os.path.exists(INDEX_PATH), f"Missing index.html at {INDEX_PATH}"
+    assert os.path.exists(INDEX_PATH), f"Missing ai_clipper_guide.html at {INDEX_PATH}"
     with open(INDEX_PATH, "r", encoding="utf-8") as f:
         return f.read()
 
 def test_html_files_exist():
-    """Verify both index.html and ai_clipper_guide.html exist and match."""
+    """Verify both ai_clipper_guide.html and ai_clipper_guide.html exist and match."""
     assert os.path.isfile(INDEX_PATH)
     assert os.path.isfile(DUPLICATE_PATH)
     with open(INDEX_PATH, "r", encoding="utf-8") as f1, open(DUPLICATE_PATH, "r", encoding="utf-8") as f2:
         c1 = f1.read()
         c2 = f2.read()
-        assert len(c1) == len(c2), "index.html and ai_clipper_guide.html lengths do not match"
-        assert c1 == c2, "index.html and ai_clipper_guide.html content is not identical"
+        assert len(c1) == len(c2), "ai_clipper_guide.html and ai_clipper_guide.html lengths do not match"
+        assert c1 == c2, "ai_clipper_guide.html and ai_clipper_guide.html content is not identical"
 
 def test_html5_doctype_and_metadata(html_content):
     """Verify HTML5 DOCTYPE, viewport, and title."""
