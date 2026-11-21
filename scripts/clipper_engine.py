@@ -117,9 +117,27 @@ def format_ass_time(sec):
     s = sec % 60
     return f"{h:d}:{m:02d}:{s:05.2f}"
 
+def clean_sub_text(text):
+    """Ensure any Perso-Arabic or Devanagari text is cleanly converted to Hinglish Latin."""
+    try:
+        from clip import romanize_hindi, contains_arabic_script
+        if contains_arabic_script(text) or any("\u0900" <= ch <= "\u097f" for ch in text):
+            return romanize_hindi(text)
+    except Exception:
+        pass
+    return text
+
 def generate_ass(words, style_key, margin_v, output_ass_path):
     st = SUB_STYLES.get(style_key, SUB_STYLES['glow'])
     
+    # Clean words and ensure Hinglish romanization
+    cleaned_words = []
+    for w in words:
+        w_dict = dict(w) if isinstance(w, dict) else {"start": w[0], "end": w[1], "word": w[2]}
+        w_dict["word"] = clean_sub_text(str(w_dict["word"]))
+        cleaned_words.append(w_dict)
+    words = cleaned_words
+
     # Group words into 3-word punchy phrases
     groups, cur = [], []
     for w in words:

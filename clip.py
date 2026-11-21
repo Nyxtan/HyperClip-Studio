@@ -118,9 +118,48 @@ _DEVANAGARI_MATRAS = {
 }
 _DEVANAGARI_VIRAMA = "्"
 
+_URDU_CHAR_MAP = {
+    "ا": "a", "آ": "aa", "ب": "b", "پ": "p", "ت": "t", "ٹ": "t",
+    "ث": "s", "ج": "j", "چ": "ch", "ح": "h", "خ": "kh", "د": "d",
+    "ڈ": "d", "ذ": "z", "ر": "r", "ڑ": "r", "ز": "z", "ژ": "zh",
+    "س": "s", "ش": "sh", "ص": "s", "ض": "z", "ط": "t", "ظ": "z",
+    "ع": "a", "غ": "gh", "ف": "f", "ق": "q", "ک": "k", "گ": "g",
+    "ل": "l", "م": "m", "ن": "n", "ں": "n", "و": "o", "ہ": "h",
+    "ۂ": "h", "ۃ": "h", "ھ": "h", "ء": "", "ی": "i", "ے": "e",
+    "ئ": "e", "ؤ": "o", "ي": "i", "ك": "k", "ى": "y", "ة": "h",
+    "۰": "0", "۱": "1", "۲": "2", "۳": "3", "۴": "4",
+    "۵": "5", "۶": "6", "۷": "7", "۸": "8", "۹": "9",
+}
+
+_URDU_COMMON_WORDS = {
+    "بھائی": "bhai", "کیا": "kya", "دیکھا": "dekha", "لوسیہ": "lucia",
+    "بنگے": "banenge", "مزائے": "maza", "اوپر": "upar", "رہا": "raha",
+    "ہے": "hai", "ہیں": "hain", "گا": "ga", "گے": "ge", "گی": "gi",
+    "کی": "ki", "کے": "ke", "کا": "ka", "کو": "ko", "سے": "se",
+    "میں": "mein", "نہیں": "nahi", "یہ": "ye", "وہ": "woh", "تو": "toh",
+    "ہی": "hi", "भी": "bhi", "اب": "ab", "سب": "sab", "گھر": "ghar",
+    "گاڑی": "gaadi", "لوگ": "log", "بات": "baat", "کچھ": "kuch",
+    "بول": "bol", "چلو": "chalo", "یار": "yaar", "دوست": "dost",
+}
+
+
+def romanize_urdu(text):
+    """Transliterate Perso-Arabic/Urdu script output from Whisper into clean Latin Hinglish."""
+    clean = re.sub(r"[^\w]", "", text)
+    if clean in _URDU_COMMON_WORDS:
+        punct = re.sub(r"[\w]", "", text)
+        return _URDU_COMMON_WORDS[clean] + punct
+    w = text.replace("ائی", "ai").replace("ائے", "aye").replace("او", "o").replace("ای", "i")
+    res = []
+    for ch in w:
+        res.append(_URDU_CHAR_MAP.get(ch, ch))
+    return "".join(res)
+
 
 def romanize_hindi(text):
     """Render Hindi in familiar Latin letters for Hinglish captions."""
+    if contains_arabic_script(text):
+        return romanize_urdu(text)
     result = []
     index = 0
     while index < len(text):
@@ -172,10 +211,10 @@ LOCK_SHARE = 0.5
 
 
 def locked_language():
-    if _forced_language in ("hi", "en"):
+    if _forced_language in ("hi", "en", "ur"):
         return _forced_language
     total = sum(_lang_votes.values())
-    if total >= LOCK_MIN_VOTES and _lang_votes.get("hi", 0) / total >= LOCK_SHARE:
+    if total >= LOCK_MIN_VOTES and (_lang_votes.get("hi", 0) + _lang_votes.get("ur", 0)) / total >= LOCK_SHARE:
         return "hi"
     return None
 
@@ -193,11 +232,11 @@ def whisper_words(audio):
         _lang_votes[spoken_language] = _lang_votes.get(spoken_language, 0) + 1
     raw_words = [(w.start, w.end, w.word.strip())
                  for segment in segments for w in (segment.words or [])]
-    if spoken_language == "hi":
-        if contains_arabic_script(" ".join(word for _, _, word in raw_words)):
-            return WordTimings(raw_words, spoken_language, "none",
-                               "Hindi recognition returned Arabic script; captions omitted")
+    if spoken_language in ("hi", "ur"):
         words = [(start, end, romanize_hindi(word)) for start, end, word in raw_words]
+        return WordTimings(words, spoken_language, "Hinglish")
+    if contains_arabic_script(" ".join(word for _, _, word in raw_words)):
+        words = [(start, end, romanize_urdu(word)) for start, end, word in raw_words]
         return WordTimings(words, spoken_language, "Hinglish")
     if spoken_language == "en":
         return WordTimings(raw_words, spoken_language, "English")
