@@ -37,6 +37,15 @@ python find_streams.py "GTA 6" --max 25 --json
 
 The YouTube API returns live search candidates in `viewCount` order. It is not a dependable ranking of current live viewers; open a candidate and confirm the stream before use.
 
+## Live Video Layout Showcase (Samples 1-4)
+
+| Sample | Layout Format | Video Features | Live Preview |
+| :--- | :--- | :--- | :--- |
+| **Sample 1** | **50/50 Seam Split** (--layout split) | Streamer facecam top (1080x600), gameplay bottom (1080x1320), Bebas Glow typography | ![Sample 1](assets/sample1_preview.jpg) |
+| **Sample 2** | **Floating Corner PiP** (--layout pip) | Fullscreen 9:16 gameplay with top-right bordered webcam (428x241), TikTok Pop font | ![Sample 2](assets/sample2_preview.jpg) |
+| **Sample 3** | **Blurred Mirror Backdrop** (--layout blur) | Centered 16:9 gameplay, top webcam (548x308), soft aspect-fill blurred backdrop | ![Sample 3](assets/sample3_preview.jpg) |
+| **Sample 4** | **Circular PiP + Dynamic Timer Ring** (--layout circle) | 360x360 circular webcam with animated 360° progress completion ring scaled to video length | ![Sample 4](assets/sample4_preview.jpg) |
+
 ## Make clips
 
 Open the candidate stream and verify that actual GTA gameplay is visible in the video. A GTA title, thumbnail, or talking head is not enough. Then start capture and keep it running until you press Ctrl+C. The default is chat-first. If chat is unavailable or has no messages for a chunk, the clipper automatically uses audio and speech instead. The clipper writes each selected highlight to `output/`:
