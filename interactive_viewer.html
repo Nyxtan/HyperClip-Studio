@@ -1800,8 +1800,8 @@ if ($latest) {
       document.getElementById('powershellRunbookCode').innerText = psDaemonScript;
 
             let qualityFlag = 'max';
-      if (selectedResolution === '4k') qualityFlag = '4k';
-      else if (selectedResolution === '720p') qualityFlag = '720p';
+      if (selectedResolution === '1080p') qualityFlag = '1080';
+      else if (selectedResolution === '720p') qualityFlag = '720';
 
       const promptTemplate = `You are an autonomous AI coding agent. Execute the stream clipping engine in HyperClip Studio with the following configuration:
 
