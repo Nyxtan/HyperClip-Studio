@@ -1813,7 +1813,7 @@ Configuration:
 - Pacing: ${selectedPacingStrategyLabel}
 
 Run Command:
-.\\autopilot.ps1 -Url "https://www.youtube.com/watch?v=STREAM_ID" -Layout "${layoutFlag}" -Font "${selectedFontKey}" -Quality "${qualityFlag}" -MomentSource "${selectedPipelineMode === 'live' ? 'chat' : 'vod'}" -ClipLen 30
+powershell -ExecutionPolicy Bypass -File .\\autopilot.ps1 -Url "https://www.youtube.com/watch?v=STREAM_ID" -Layout "${layoutFlag}" -Font "${selectedFontKey}" -Quality "${qualityFlag}" -MomentSource "${selectedPipelineMode === 'live' ? 'chat' : 'vod'}" -ClipLen 30
 
 Daemon / Auto-Publisher:
 ${psDaemonScript}
@@ -1842,13 +1842,26 @@ Process the stream and notify me with the output file path when done!`;
    pip install -r requirements.txt
 
 4. Verify Installation:
-   .\\run.ps1 clip.py --help
+   python clip.py --help
 
 Notify me once the installation and environment verification are complete!`;
 
       navigator.clipboard.writeText(installPrompt).then(() => {
-        alert("✅ HyperClip Install Prompt Copied! Paste it directly into your AI Agent (Cursor, Devin, Claude, Antigravity) to install.");
+        showToast("✅ HyperClip Install Prompt Copied to Clipboard!");
       });
+    }
+
+    function showToast(msg) {
+      let toast = document.getElementById('customToast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'customToast';
+        toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#7C3AED;color:#fff;padding:14px 24px;border-radius:10px;font-weight:600;font-size:0.95rem;box-shadow:0 10px 25px rgba(0,0,0,0.5);z-index:99999;transition:opacity 0.3s ease;';
+        document.body.appendChild(toast);
+      }
+      toast.innerText = msg;
+      toast.style.opacity = '1';
+      setTimeout(() => { toast.style.opacity = '0'; }, 3000);
     }
 
     function copyMasterPrompt() {
