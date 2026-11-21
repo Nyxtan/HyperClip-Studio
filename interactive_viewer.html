@@ -1744,7 +1744,7 @@
       updatePromptCode();
     }
 
-    function updatePromptCode() {
+        function updatePromptCode() {
       document.getElementById('summaryRepo').innerText = selectedRepoName;
       document.getElementById('summaryLayout').innerText = selectedLayoutName + ' (Mode ' + selectedLayoutMode + ')';
       document.getElementById('summaryFont').innerText = selectedFontLabel;
@@ -1752,162 +1752,86 @@
       document.getElementById('summaryMode').innerText = selectedPipelineModeLabel;
       document.getElementById('summaryPacing').innerText = selectedPacingStrategyLabel;
 
-      const fontSpec = fontPresets[selectedFontKey].spec;
+      // Map Mode to CLI flag: A -> split, B -> pip, C -> blur, D -> circle
+      let layoutFlag = 'split';
+      if (selectedLayoutMode.toLowerCase() === 'b') layoutFlag = 'pip';
+      else if (selectedLayoutMode.toLowerCase() === 'c') layoutFlag = 'blur';
+      else if (selectedLayoutMode.toLowerCase() === 'd') layoutFlag = 'circle';
 
       // Dynamic PowerShell Script depending on Pacing & Mode
       let psDaemonScript = '';
       if (selectedPacingStrategy === 'continuous') {
-        psDaemonScript = `# === 24/7 UNATTENDED CONTINUOUS DAEMON (VPS EMULATION) ===
-# Keeps running unattended in background while PC is idle/streaming
+        psDaemonScript = `# === 24/7 UNATTENDED CONTINUOUS DAEMON ===
+# Monitors stream and auto-publishes clips in the background
 while ($true) {
-  Write-Host "[DAEMON] Checking live stream highlights at $(Get-Date)..." -ForegroundColor Cyan
-  python clip.py "https://www.youtube.com/watch?v=STREAM_ID" --gameplay-confirmed --clip-len 30 --lead-in 6 --top 2
+  Write-Host "[DAEMON] Monitoring stream highlights at $(Get-Date)..." -ForegroundColor Cyan
+  .\run.ps1 clip.py "https://www.youtube.com/watch?v=STREAM_ID" --layout ${layoutFlag} --font ${selectedFontKey} --moment-source chat --clip-len 30
 
-  # Check rendered clips and schedule via verified Zernio publisher
+  # Auto-schedule newly rendered clips
   Get-ChildItem -Path ./output/*.mp4 | ForEach-Object {
     $meta = [System.IO.Path]::ChangeExtension($_.FullName, ".json")
     if (Test-Path $meta) {
-      python publish.py $_.FullName --publish --unattended
+      .\run.ps1 publish.py $_.FullName --publish --unattended
     }
   }
-  Start-Sleep -Seconds 60 # Sleep cycle for next burst check
+  Start-Sleep -Seconds 60
 }`;
       } else if (selectedPacingStrategy === 'paced') {
         psDaemonScript = `# === SAFE HUMAN-PACED DAEMON (ANTI-SPAM BYPASS) ===
-# Spaces out publishing by 90-180 minutes with randomized user-agents
-Write-Host "[ANTI-SPAM ACTIVE] Running with human-like delays to avoid platform shadowbans" -ForegroundColor Green
-python clip.py "https://www.youtube.com/watch?v=STREAM_ID" --gameplay-confirmed --clip-len 30 --lead-in 6
+# Spaces out publishing by 90-180 minutes to avoid platform shadowbans
+Write-Host "[ANTI-SPAM ACTIVE] Running with human-like delays" -ForegroundColor Green
+.\run.ps1 clip.py "https://www.youtube.com/watch?v=STREAM_ID" --layout ${layoutFlag} --font ${selectedFontKey} --moment-source chat --clip-len 30
 
-# Preview and schedule the latest clip through the verified publisher
 $latest = Get-ChildItem -Path ./output/*.mp4 | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 if ($latest) {
-  # Calculate randomized safe human delay (90-180 min)
   $delayMin = Get-Random -Minimum 90 -Maximum 180
   $targetTime = (Get-Date).AddMinutes($delayMin).ToString("yyyy-MM-ddTHH:mm:sszzz")
   Write-Host "[Schedule] Queueing publication for $targetTime ($delayMin min delay)..." -ForegroundColor Yellow
-  python publish.py $latest.FullName --publish --unattended --scheduled-for $targetTime
+  .\run.ps1 publish.py $latest.FullName --publish --unattended --scheduled-for $targetTime
 }`;
       } else {
         psDaemonScript = `# === SCHEDULED PEAK TRAFFIC WINDOWS ===
 # Queues clips strictly for evening prime-time slots (18:00 - 22:00 IST)
+.\run.ps1 clip.py "https://www.youtube.com/watch?v=STREAM_ID" --layout ${layoutFlag} --font ${selectedFontKey} --moment-source chat --clip-len 30
 $latest = Get-ChildItem -Path ./output/*.mp4 | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 if ($latest) {
   $primeTime = (Get-Date -Hour 19 -Minute 30 -Second 0).ToString("yyyy-MM-ddTHH:mm:sszzz")
-  python publish.py $latest.FullName --publish --unattended --scheduled-for $primeTime
+  .\run.ps1 publish.py $latest.FullName --publish --unattended --scheduled-for $primeTime
 }`;
       }
 
       document.getElementById('powershellRunbookCode').innerText = psDaemonScript;
 
-      const promptTemplate = `You are an autonomous AI senior video systems engineer. Set up, configure, and execute a fully automated AI stream clipping and multi-platform publishing pipeline on my computer based on my selections:
+      const promptTemplate = `You are an autonomous AI coding agent. Set up and run the stream clipping pipeline using HyperClip Studio:
 
-CRITICAL INSTRUCTION FOR CODING AGENT:
-Act as a smart companion directive. Follow the repository's native setup, auto-verify all tools and dependencies, solve Windows-specific environment issues automatically, and enforce our battle-tested rendering & typography rules without breaking the core repo workflow.
+Target Configuration:
+- Repository: https://github.com/Nyxtan/HyperClip-Studio.git
+- Layout: ${selectedLayoutName} (Flag: --layout ${layoutFlag})
+- Typography: ${selectedFontLabel} (Flag: --font ${selectedFontKey})
+- Pipeline Mode: ${selectedPipelineModeLabel}
+- Pacing: ${selectedPacingStrategyLabel}
 
-================================================================================
-STEP 1: REPOSITORY CLONE & ENVIRONMENT SETUP (WITH WINDOWS AUTO-FIXES)
-================================================================================
-1. Verify system tools (Git, Python 3.10+, and FFmpeg):
-   - Check if FFmpeg is on PATH (\`ffmpeg -version\`). If missing on Windows, install via winget:
-     winget install Gyan.FFmpeg
-2. Clone the selected repository into workspace:
-   git clone ${selectedRepoUrl}
-   cd ${selectedRepoName.includes('/') ? selectedRepoName.split('/')[1] : selectedRepoName}
-3. Create a clean virtual environment and install dependencies:
+Instructions:
+1. Clone the repository and navigate into it:
+   git clone https://github.com/Nyxtan/HyperClip-Studio.git
+   cd HyperClip-Studio
+
+2. Setup virtual environment and dependencies:
    python -m venv .venv
    # Windows PowerShell:
-   .venv\\Scripts\\Activate.ps1
+   .\.venv\Scripts\Activate.ps1
    # macOS/Linux:
    source .venv/bin/activate
-   pip install -r requirements.txt portalocker fonttools
-4. WINDOWS FILE-LOCKING FIX:
-   On Windows, native Unix \`fcntl\` is unavailable. If any file attempts to import \`fcntl\`, create a lightweight \`fcntl.py\` shim in the root using \`portalocker\` or no-op locks to ensure zero Windows crashes.
-5. AUTO-CONFIGURED MCP TOOLS:
-   Verify or install the essential MCP servers (Filesystem MCP & Browser/Fetch MCP) so subsequent video inspection and authentication continue autonomously.
+   pip install -r requirements.txt
 
-================================================================================
-STEP 2: PIPELINE MODE & STREAM FRAMING (BATTLE-TESTED MODE A 50/50 SPLIT)
-================================================================================
-Selected Pipeline Mode: ${selectedPipelineModeLabel}
-${selectedPipelineMode === 'live' 
-  ? '- Continuously monitor live YouTube streams for chat burst velocity. Extract 30s clips when keyword/frequency spikes happen.' 
-  : '- Ingest local recorded VOD files in batch using the repo test/cut pipeline (\`python clip.py --file <path> --test\`).'}
+3. Execute the pipeline:
+   - For an automated end-to-end run with autopilot:
+     .\autopilot.ps1 -Url "https://www.youtube.com/watch?v=STREAM_ID" -Layout "${layoutFlag}" -Font "${selectedFontKey}" -MomentSource "${selectedPipelineMode === 'live' ? 'chat' : 'vod'}" -ClipLen 30
 
-Target Layout: Mode ${selectedLayoutMode} (${selectedLayoutName})
-${selectedLayoutMode === 'A' ? '- Set 50/50 vertical split (1080x1920): Top 50% (1080x810) dedicated to streamer facecam with Lanczos upscaling and unsharp contrast mask; bottom 50% (1080x1110) locks onto centered gameplay with zero aspect ratio squeezing or distortion. Pinned center karaoke subtitles across divider line. DO NOT use floating corner inset webcam boxes!' : ''}
-${selectedLayoutMode === 'B' ? '- Set Corner PIP (1080x1920): Fullscreen vertical 9:16 gameplay background with clean floating 420x315 streamer webcam window (styled with 4px border) placed in top corner. Subtitles positioned in the lower-third (MarginV 420) so they never overlap the camera.' : ''}
-${selectedLayoutMode === 'C' ? '- Set Centered 16:9 gameplay (1080x608) framed in center with heavy box-blurred (25:5) duplicate background filling vertical borders. Subtitles positioned in lower-third.' : ''}
-
-CRITICAL STREAM CAPTURE & RENDER RULES:
-1. LIVE DUAL-STREAM AUDIO MUXING: When capturing YouTube live streams via yt-dlp, always pass both video HLS manifest (itag 312) AND audio HLS manifest (itag 234) together into FFmpeg (-i <v_url> -i <a_url> -map 0:v -map 1:a) so output clips are never silent.
-2. AI AUTO-FACE TRACKING (NO HARDCODED CROPS): Streamers place webcams in different corners (Kai Cenat = left, Speed = bottom-right/left). Use OpenCV / MediaPipe face detection to scan quadrants, automatically locate the streamer face coordinates, and frame the camera box dynamically.
-3. 60.0 FPS LOCKED RENDERING: Always enforce true 60fps (-r 60, fps=60) with CRF 16-17 encoding to eliminate frame judder and preserve 60fps stream smoothness.
-4. ZERO-SQUEEZE PROPORTION: Never vertically compress 16:9 gameplay into 9:16. Always crop proportionally to preserve natural geometry.
-5. WINDOWS FFMPEG PATH FIX: Always execute FFmpeg from the output working directory using relative filenames to prevent drive colon parsing errors.
-
-================================================================================
-STEP 3: AUTHENTIC SUBTITLE TYPOGRAPHY SPECIFICATION
-================================================================================
-Subtitle Font Configuration:
-- Configure subtitle engine to use: ${fontSpec}
-- Caption format: Word-by-word active popups (authentic default styling: highlighted active word, white/grey remaining). English stays English; Hindi speech romanized into Hinglish.
-- If using the Image 1 preset (Rubik Black 900 Lavender Glow):
-  * Font: Rubik Black (900 weight bold uppercase)
-  * Inactive Text: Solid White (#FFFFFF)
-  * Active Spoken Word: Pastel Lavender (#EEA8FD) scaled 108%
-  * Stroke / Outline: Solid Black 6px heavy outline
-  * Ambient Glow: Deep Purple/Violet (#B02060) banner behind text layer
-  * Transcribe audio using Whisper with VAD alignment to lock word-by-word popups to actual speech timestamps.
-
-================================================================================
-STEP 4: AI VIRAL HOOKS & MULTI-PLATFORM OPTIMIZED METADATA (GEMINI API)
-================================================================================
-Integrate Gemini API to automatically enhance rendered clips:
-- Read transcript of each 30-sec clip.
-- Platform-Specific Metadata Optimization:
-  1. YouTube Shorts: High-CTR curiosity hook title (under 50 chars with emoji) + SEO description packed with keywords & #shorts.
-  2. Instagram Reels: Punchy 1-line caption, relatable question to trigger comments, and 15 targeted niche hashtags.
-  3. TikTok: Fast-paced controversial hook text and viral trending audio tags.
-  4. Spoken Audio Hook: 3-second spoken opening line recommendation for creator voiceovers.
-- Write this structured metadata directly to \`output/CLIP_ID.json\` so publishing scripts automatically map fields per platform.
-
-================================================================================
-STEP 5: TARGET STREAM RESOLUTION & HARDWARE ENCODING
-================================================================================
-Render Resolution: ${selectedResolutionLabel}
-${selectedResolution === '4k' 
-  ? '- Force 4K vertical export (2160x3840). Use NVIDIA NVENC GPU hardware acceleration (-c:v h264_nvenc -preset p6 -b:v 35M).' 
-  : selectedResolution === '1080p'
-  ? '- Force 1080x1920 Full HD at 60fps (-c:v libx264 -preset fast -crf 19).'
-  : '- Force 720x1280 lightweight fast render for low-spec CPU machines (-c:v libx264 -preset veryfast -crf 23).'}
-
-================================================================================
-STEP 6: BROWSER AUTHENTICATION HANDOFF PROTOCOL
-================================================================================
-When authenticating social platforms (Instagram / YouTube / Blotato / Zernio):
-1. The agent launches the browser with the authentication login URL automatically:
-   \`Start-Process "https://app.blotato.com/login"\` (or platform equivalent: https://zernio.com/agents).
-2. The user signs in ONCE in the browser window.
-3. The agent detects session cookies / API token, closes the browser, and stores credentials in \`.env\`.
-4. Subsequent operations continue 100% unattended without prompting for credentials.
-
-================================================================================
-STEP 7: PACING & AUTOMATED PUBLISHING (DAEMON RUNNER)
-================================================================================
-Selected Pacing Strategy: ${selectedPacingStrategyLabel}
-${selectedPacingStrategy === 'continuous' 
-  ? '- Run continuous daemon loop simulating a cloud VPS. Process and queue clips 24/7 in the background while machine is on.' 
-  : selectedPacingStrategy === 'paced'
-  ? '- Enforce anti-spam randomized delay (90-180 min gaps between posts) to bypass platform bot detection and avoid shadowbans.'
-  : '- Schedule clip release strictly within creator peak evening viewing hours (18:00 - 22:00 IST).'}
-
-Execute the unified clipper engine for immediate testing:
-python scripts/clipper_engine.py "https://www.youtube.com/watch?v=STREAM_ID" --layout ${selectedLayoutMode.toLowerCase() === 'a' ? 'split' : (selectedLayoutMode.toLowerCase() === 'b' ? 'pip' : 'blur')} --font ${selectedFontKey} --gemini --publish
-
-Or execute the verified PowerShell runner script to start the background daemon:
+   - Or run the background daemon directly:
 ${psDaemonScript}
 
-Guide me step-by-step and notify me when the first test clip is rendered!`;
+Notify me with the output path once the first clip is rendered!`;
 
       document.getElementById('masterPromptCode').innerText = promptTemplate;
     }
