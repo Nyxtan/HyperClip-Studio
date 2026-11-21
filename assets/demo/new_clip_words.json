@@ -1,0 +1,50 @@
+{
+  "text": "Let's do it.  Oh, they shared it same account.",
+  "words": [
+    {
+      "word": "Let's",
+      "start": 0.0,
+      "end": 0.9
+    },
+    {
+      "word": "do",
+      "start": 0.9,
+      "end": 1.06
+    },
+    {
+      "word": "it.",
+      "start": 1.06,
+      "end": 2.64
+    },
+    {
+      "word": "Oh,",
+      "start": 3.7,
+      "end": 4.26
+    },
+    {
+      "word": "they",
+      "start": 4.38,
+      "end": 4.56
+    },
+    {
+      "word": "shared",
+      "start": 4.56,
+      "end": 4.84
+    },
+    {
+      "word": "it",
+      "start": 4.84,
+      "end": 5.02
+    },
+    {
+      "word": "same",
+      "start": 5.02,
+      "end": 5.1
+    },
+    {
+      "word": "account.",
+      "start": 5.1,
+      "end": 5.64
+    }
+  ]
+}
