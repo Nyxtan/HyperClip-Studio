@@ -551,7 +551,8 @@ def render_clip(input_file, layout="split", font="glow", output=None, gemini=Fal
 
     # Determine MarginV based on layout
     # For split: bottom margin is 1920 - 600 - text_height ≈ 1280 to position subtitle right at Y=600 divider
-    margin_v = 1270 if layout in ['split', 'A'] else (420 if layout in ['pip', 'B'] else 460)
+    # For circle / pip: 420 places subtitles cleanly in the lower-third directly over the gameplay without blur
+    margin_v = 1270 if layout in ['split', 'A'] else (420 if layout in ['pip', 'B'] else 420)
 
     # Detect facecam box dynamically
     cam_crop = detect_streamer_facecam(input_file)
