@@ -1,5 +1,6 @@
 # HyperClip Studio — Autonomous AI Live Stream Clipper & Reel Engine
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-hyperclip--studio.pages.dev-7C3AED?style=for-the-badge&logo=cloudflarepages&logoColor=white)](https://hyperclip-studio.pages.dev/)
 [![Deploy to Cloudflare Pages](https://img.shields.io/badge/Deploy%20to-Cloudflare%20Pages-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)](https://dash.cloudflare.com/?to=/:account/pages/new)
 [![Deploy with Vercel](https://img.shields.io/badge/Deploy%20with-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/new/clone?repository-url=https://github.com/Nyxtan/HyperClip-Studio)
 
