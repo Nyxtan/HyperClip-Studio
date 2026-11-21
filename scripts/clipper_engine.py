@@ -187,12 +187,12 @@ def generate_ass(words, style_key, margin_v, output_ass_path):
 # -------------------------------------------------------------
 def detect_streamer_facecam(video_path):
     """
-    Scans video frames with YuNet across outer quadrants to dynamically locate
+    Scans video frames with YuNet neural detector across the frame to dynamically locate
     the streamer's webcam crop box in 1920x1080 coordinate space.
+    Automatically finds webcam regardless of position (bottom-left, top-left, bottom-right, top-right).
     Returns (crop_w, crop_h, crop_x, crop_y) in 1920x1080 space.
-    Calibrated tight zoom coordinates: (270, 150, 65, 440) excludes bottom live chat comments.
     """
-    default_crop_1080p = (270, 150, 65, 440)
+    default_crop_1080p = (360, 360, 65, 440)
     try:
         import cv2
         import numpy as np
@@ -201,7 +201,7 @@ def detect_streamer_facecam(video_path):
 
     model_path = os.path.join(MODELS_DIR, "face_detection_yunet_2023mar.onnx")
     if not os.path.isfile(model_path):
-        repo_model = os.path.join(ROOT_DIR, "repos", "GTA-Auto-Clipper", "models", "face_detection_yunet_2023mar.onnx")
+        repo_model = os.path.join(ROOT_DIR, "models", "face_detection_yunet_2023mar.onnx")
         if os.path.isfile(repo_model):
             model_path = repo_model
         else:
@@ -216,12 +216,9 @@ def detect_streamer_facecam(video_path):
         fh = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-        detector = cv2.FaceDetectorYN.create(model_path, "", (320, 320), 0.55, 0.3, 5000)
-        
-        # Check corners where streamer cameras sit: BL, TL, BR, TR
-        # Specifically targeting outer 35% margins so gameplay/cutscene faces in center are ignored
-        corner_detections = []
-        sample_indices = np.linspace(10, max(11, total_frames - 10), num=7, dtype=int)
+        detector = cv2.FaceDetectorYN.create(model_path, "", (320, 320), 0.35, 0.3, 5000)
+        detections = []
+        sample_indices = np.linspace(10, max(11, total_frames - 10), num=12, dtype=int)
 
         for idx in sample_indices:
             cap.set(cv2.CAP_PROP_POS_FRAMES, int(idx))
@@ -229,51 +226,41 @@ def detect_streamer_facecam(video_path):
             if not ok or frame is None:
                 continue
 
-            # Crop bottom-left and top-left regions
-            sub_regions = [
-                # (crop_x, crop_y, crop_w, crop_h)
-                (0, int(fh * 0.4), int(fw * 0.35), int(fh * 0.6)), # BL
-                (0, 0, int(fw * 0.35), int(fh * 0.5)),              # TL
-                (int(fw * 0.65), int(fh * 0.4), int(fw * 0.35), int(fh * 0.6)), # BR
-                (int(fw * 0.65), 0, int(fw * 0.35), int(fh * 0.5))  # TR
-            ]
-
-            for rx, ry, rw, rh in sub_regions:
-                sub = frame[ry:ry+rh, rx:rx+rw]
-                resized = cv2.resize(sub, (320, 320))
-                _, faces = detector.detect(resized)
-                if faces is not None:
-                    for f in faces:
-                        if f[-1] >= 0.55:
-                            gx = rx + f[0] * (rw / 320.0)
-                            gy = ry + f[1] * (rh / 320.0)
-                            gw = f[2] * (rw / 320.0)
-                            gh = f[3] * (rh / 320.0)
-                            corner_detections.append((gx, gy, gw, gh))
-
+            resized = cv2.resize(frame, (320, 320))
+            _, faces = detector.detect(resized)
+            if faces is not None:
+                for f in faces:
+                    score = f[-1]
+                    if score >= 0.40:
+                        gx = f[0] * (fw / 320.0)
+                        gy = f[1] * (fh / 320.0)
+                        gw = f[2] * (fw / 320.0)
+                        gh = f[3] * (fh / 320.0)
+                        detections.append((gx, gy, gw, gh, score))
         cap.release()
 
-        if corner_detections:
-            # Scale coordinates up to 1920x1080
+        if detections:
             sx = 1920.0 / fw
             sy = 1080.0 / fh
 
-            med_x = int(np.median([d[0] for d in corner_detections]) * sx)
-            med_y = int(np.median([d[1] for d in corner_detections]) * sy)
-            med_w = int(np.median([d[2] for d in corner_detections]) * sx)
-            med_h = int(np.median([d[3] for d in corner_detections]) * sy)
+            med_x = int(np.median([d[0] for d in detections]) * sx)
+            med_y = int(np.median([d[1] for d in detections]) * sy)
+            med_w = int(np.median([d[2] for d in detections]) * sx)
+            med_h = int(np.median([d[3] for d in detections]) * sy)
 
-            # Zoom tightly on face and upper shoulders:
-            # Target width ~270, height ~150 (ratio 1.8 matching 1080x600 top webcam)
-            box_w = 270
-            box_h = 150
-            box_x = max(0, min(1920 - box_w, med_x - (box_w - med_w) // 2))
-            # Keep crop well above chat comments which start below y=640
-            box_y = max(420, min(600, med_y - int(box_h * 0.4)))
-            return (box_w, box_h, box_x, box_y)
+            center_x = med_x + med_w // 2
+            center_y = med_y + med_h // 2
+
+            cam_size = int(max(med_w, med_h) * 2.8)
+            cam_size = max(240, min(480, cam_size))
+
+            crop_x = max(0, min(1920 - cam_size, center_x - cam_size // 2))
+            crop_y = max(0, min(1080 - cam_size, center_y - cam_size // 2))
+
+            return (cam_size, cam_size, crop_x, crop_y)
 
     except Exception as e:
-        print(f"[FaceCam Auto-Detect] Warning: {e}. Using calibrated fallback.")
+        print(f"[FaceCam Auto-Detect] Warning: {e}. Using fallback.")
 
     return default_crop_1080p
 
