@@ -42,12 +42,12 @@ The YouTube API returns live search candidates in `viewCount` order. It is not a
 
 ## Live Video Layout Showcase (Samples 1-4)
 
-| Sample | Layout Format | Video Features | Live Preview |
+| Sample | Layout Format | Video Features | Live Preview (Animated) |
 | :--- | :--- | :--- | :--- |
-| **Sample 1** | **50/50 Seam Split** (--layout split) | Streamer facecam top (1080x600), gameplay bottom (1080x1320), Bebas Glow typography | ![Sample 1](assets/sample1_preview.jpg) |
-| **Sample 2** | **Floating Corner PiP** (--layout pip) | Fullscreen 9:16 gameplay with top-right bordered webcam (428x241), TikTok Pop font | ![Sample 2](assets/sample2_preview.jpg) |
-| **Sample 3** | **Blurred Mirror Backdrop** (--layout blur) | Centered 16:9 gameplay, top webcam (548x308), soft aspect-fill blurred backdrop | ![Sample 3](assets/sample3_preview.jpg) |
-| **Sample 4** | **Circular PiP + Dynamic Timer Ring** (--layout circle) | 360x360 circular webcam with animated 360° progress completion ring scaled to video length | ![Sample 4](assets/sample4_preview.jpg) |
+| **Sample 1** | **50/50 Seam Split** (`--layout split`) | Streamer facecam top (1080x600), gameplay bottom (1080x1320), Bebas Glow typography | [![Sample 1](assets/sample1_preview.gif)](sample1_kai_tight_split.mp4) |
+| **Sample 2** | **Floating Corner PiP** (`--layout pip`) | Fullscreen 9:16 gameplay with top-right bordered webcam (428x241), TikTok Pop font | [![Sample 2](assets/sample2_preview.gif)](sample2_pip_tiktok.mp4) |
+| **Sample 3** | **Blurred Mirror Backdrop** (`--layout blur`) | Centered 16:9 gameplay, top webcam (548x308), soft aspect-fill blurred backdrop | [![Sample 3](assets/sample3_preview.gif)](sample3_blur_neon.mp4) |
+| **Sample 4** | **Circular PiP + Dynamic Timer Ring** (`--layout circle`) | 360x360 circular webcam with animated 360° progress completion ring scaled to video length | [![Sample 4](assets/sample4_preview.gif)](sample4_circle_hormozi.mp4) |
 
 ## Make clips
 
