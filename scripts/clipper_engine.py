@@ -281,14 +281,15 @@ def detect_streamer_facecam(video_path, layout='circle'):
                 crop_y = max(0, min(1080 - cam_size, center_y - cam_size // 2))
                 return (cam_size, cam_size, crop_x, crop_y)
             else:
-                # Locked Optimal Framing for Split (1080x600), Corner PIP (428x241) & Blur (548x308):
-                # 270x150 (ratio 1.8 matching 1080x600 top webcam & 428x241 / 548x308)
-                # Centers horizontally on streamer face and crops above live chat comments
-                box_w = 270
-                box_h = 150
-                box_x = max(0, min(1920 - box_w, center_x - box_w // 2))
-                box_y = max(0, min(1080 - box_h, med_y - int(box_h * 0.4)))
-                return (box_w, box_h, box_x, box_y)
+                # Proportional 1.8 Aspect Ratio Framing for Split, Corner PIP & Blur:
+                # Scales naturally with streamer webcam size (2.8x face size, clamped 270..640)
+                # Avoids over-zooming on large webcams while perfectly preserving small corner webcams (Kai Cenat minimum 270x150)
+                box_w = int(max(med_w, med_h) * 2.8)
+                box_w = max(270, min(640, box_w))
+                box_h = int(box_w / 1.8)
+                crop_x = max(0, min(1920 - box_w, center_x - box_w // 2))
+                crop_y = max(0, min(1080 - box_h, med_y - int(box_h * 0.35)))
+                return (box_w, box_h, crop_x, crop_y)
 
     except Exception as e:
         print(f"[FaceCam Auto-Detect] Warning: {e}. Using fallback.")
