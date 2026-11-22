@@ -1825,29 +1825,37 @@ Process the stream and notify me with the output file path when done!`;
 
         function copyRepoInstallPrompt(e) {
       if (e) e.stopPropagation();
-      const installPrompt = `You are an autonomous AI coding agent. Clone, setup dependencies, and verify the NyxClip Studio stream clipping engine on my computer:
+      const installPrompt = `You are an autonomous AI coding agent. Completely setup, verify, and wire the NyxClip Studio stream clipping engine on my machine with zero manual friction:
 
-1. Clone Repository:
+1. Clone Repository & Setup Virtual Environment:
    git clone https://github.com/Nyxtan/NyxClip-Studio.git
    cd NyxClip-Studio
-
-2. Setup Python Virtual Environment:
    python -m venv .venv
-   # Windows PowerShell:
-   .\\.venv\\Scripts\\Activate.ps1
-   # macOS/Linux:
-   source .venv/bin/activate
-
-3. Install Dependencies:
+   # Windows PowerShell: .\.venv\Scripts\Activate.ps1
+   # macOS/Linux: source .venv/bin/activate
    pip install -r requirements.txt
 
-4. Verify Installation:
-   python clip.py --help
+2. Auto-Install Required System Binaries & Fonts:
+   - Check if ffmpeg is on PATH. If missing:
+     * Windows: winget install -e --id Gyan.FFmpeg
+     * macOS: brew install ffmpeg
+     * Linux: sudo apt update && sudo apt install -y ffmpeg
+   - Run: python scripts/install_fonts.py to register required typography (Bebas Neue, The Bold Font, Rubik).
 
-Notify me once the installation and environment verification are complete!`;
+3. Setup AI & Social Auto-Publishing (Instagram & YouTube):
+   - Check if GEMINI_API_KEY and ZERNIO_API_KEY exist in .env.
+   - If missing, guide user to grab free keys:
+     * Gemini AI: https://aistudio.google.com/app/apikey
+     * Zernio (Instagram & YouTube Auto-Publisher): https://zernio.com
+   - Store them safely into .env so the user never has to re-enter them.
+
+4. Self-Test & Ready Notification:
+   - Run: python clip.py --help
+   - Confirm all 4 layouts (Split, PiP, Blur, Circle) and Zernio publishing module are ready.
+   - Present me with a ready-to-use clipping command to test my first stream!`;
 
       navigator.clipboard.writeText(installPrompt).then(() => {
-        showToast("✅ NyxClip Install Prompt Copied to Clipboard!");
+        showToast("✅ NyxClip Zero-Friction Install Prompt Copied!");
       });
     }
 

@@ -1052,8 +1052,8 @@ def main():
     ap.add_argument("--top", type=int, default=1, help="clips per chunk")
     ap.add_argument("--gameplay-confirmed", action="store_true",
                     help="confirm you visually checked that the source shows actual GTA gameplay before a live capture")
-    ap.add_argument("--layout", choices=("pip", "fill", "fit", "split", "blur", "circle", "circle_pip"), default="circle",
-                    help="circle (Sample 4 with dynamic timer ring), split (Sample 1), pip (Sample 2), blur (Sample 3), fill: gameplay centered")
+    ap.add_argument("--layout", choices=("pip", "fill", "fit", "split", "blur", "circle", "circle_pip", "sample1", "sample2", "sample3", "sample4"), default="circle",
+                    help="circle/sample4 (Dynamic timer ring), split/sample1 (50/50 Seam), pip/sample2 (Corner PiP), blur/sample3 (Mirror Backdrop), fill: gameplay centered")
     ap.add_argument("--font", default="beast", choices=("beast", "hormozi", "glow", "neon", "clean", "tiktok"),
                     help="subtitle font preset (default: beast/Komika Axis)")
     ap.add_argument("--ring-color", default="auto", choices=("auto", "font", "streamer", "vibe", "yellow", "green", "cyan", "purple", "white"),
