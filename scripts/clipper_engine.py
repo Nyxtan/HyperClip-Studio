@@ -563,33 +563,20 @@ def render_clip(input_file, layout="split", font="glow", output=None, gemini=Fal
     cam_crop = detect_streamer_facecam(input_file, layout=rule.name)
     print(f"[AI Clipper Suite] Streamer FaceCam Frame: crop={cam_crop[0]}:{cam_crop[1]}:{cam_crop[2]}:{cam_crop[3]}")
 
-    # Load word-level timestamps
+    # Load word-level timestamps (auto-transcribe with Whisper if words_data is not provided)
     if words_data is not None:
         words = words_data.get("words", words_data) if isinstance(words_data, dict) else words_data
     else:
-        words_json = os.path.join(ROOT_DIR, "new_clip_words.json")
-        if not os.path.exists(words_json):
-            words_json = os.path.join(ROOT_DIR, "assets", "demo", "new_clip_words.json")
-            
-        if os.path.exists(words_json):
-            with open(words_json, "r", encoding="utf-8") as f:
-                d = json.load(f)
-                words = d.get("words", d)
-        else:
-            words = [
-                {"start": 0.4, "end": 0.94, "word": "YO"},
-                {"start": 0.94, "end": 1.5, "word": "YOU"},
-                {"start": 1.5, "end": 1.66, "word": "LIVE"},
-                {"start": 1.66, "end": 2.08, "word": "HERE."},
-                {"start": 2.3, "end": 2.56, "word": "YOU"},
-                {"start": 2.56, "end": 2.78, "word": "DRIVE"},
-                {"start": 2.78, "end": 2.94, "word": "THE"},
-                {"start": 2.94, "end": 3.36, "word": "CARS"},
-                {"start": 3.36, "end": 3.66, "word": "YOUR"},
-                {"start": 3.66, "end": 4.26, "word": "PARTY"},
-                {"start": 4.26, "end": 5.0, "word": "LEAVE"},
-                {"start": 5.0, "end": 5.3, "word": "LIGHT."}
-            ]
+        # Run live Whisper speech-to-text on the actual input audio
+        try:
+            sys.path.append(ROOT_DIR)
+            from clip import whisper_words
+            raw_words = whisper_words(input_file)
+            words = [{"start": float(w[0]), "end": float(w[1]), "word": str(w[2])} for w in raw_words]
+            print(f"[AI Clipper Suite] Whisper transcribed {len(words)} actual spoken words from video.")
+        except Exception as e:
+            print(f"[AI Clipper Suite] Whisper transcription fallback/notice: {e}")
+            words = []
 
     # Generate ASS subtitle
     ass_path = os.path.join(ROOT_DIR, f"temp_{layout}_{font}_{os.getpid()}.ass")
