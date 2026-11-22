@@ -204,14 +204,16 @@ def generate_ass(words, style_key, margin_v, output_ass_path):
 # -------------------------------------------------------------
 # 2. FACE DETECTION & AUTOFRAMING
 # -------------------------------------------------------------
-def detect_streamer_facecam(video_path):
+def detect_streamer_facecam(video_path, layout='circle'):
     """
     Scans video frames with YuNet neural detector across the frame to dynamically locate
     the streamer's webcam crop box in 1920x1080 coordinate space.
-    Automatically finds webcam regardless of position (bottom-left, top-left, bottom-right, top-right).
+    - For 'circle' / 'circle_pip': Uses smart tight 1.75x square zoom to cleanly frame face in circle.
+    - For 'split', 'pip', 'blur': Preserves original full webcam rectangular frame (aspect ratio 4:3 / 16:9)
+      without zooming in uncomfortably onto face.
     Returns (crop_w, crop_h, crop_x, crop_y) in 1920x1080 space.
     """
-    default_crop_1080p = (360, 360, 65, 440)
+    default_crop_1080p = (360, 360, 65, 440) if layout in ('circle', 'circle_pip') else (480, 360, 20, 380)
     try:
         import cv2
         import numpy as np
@@ -268,18 +270,27 @@ def detect_streamer_facecam(video_path):
             med_h = int(np.median([d[3] for d in detections]) * sy)
 
             center_x = med_x + med_w // 2
-            # Offset slightly upwards towards eyes/forehead so chin and neck don't crowd bottom
-            center_y = med_y + int(med_h * 0.42)
 
-            # Smart Tight Zoom for Circular PIP:
-            # 1.7x face size perfectly frames head & face without showing unwanted webcam borders/overlays
-            cam_size = int(max(med_w, med_h) * 1.75)
-            cam_size = max(180, min(380, cam_size))
-
-            crop_x = max(0, min(1920 - cam_size, center_x - cam_size // 2))
-            crop_y = max(0, min(1080 - cam_size, center_y - cam_size // 2))
-
-            return (cam_size, cam_size, crop_x, crop_y)
+            if layout in ('circle', 'circle_pip'):
+                # Smart Tight Zoom ONLY for Circular PIP:
+                # 1.75x face size perfectly frames head & face inside 360 circle
+                center_y = med_y + int(med_h * 0.42)
+                cam_size = int(max(med_w, med_h) * 1.75)
+                cam_size = max(180, min(380, cam_size))
+                crop_x = max(0, min(1920 - cam_size, center_x - cam_size // 2))
+                crop_y = max(0, min(1080 - cam_size, center_y - cam_size // 2))
+                return (cam_size, cam_size, crop_x, crop_y)
+            else:
+                # Original Natural Framing for Split, PIP, and Blur:
+                # 2.8x - 3.2x framing preserves the entire creator webcam room/setup (4:3 aspect box)
+                center_y = med_y + med_h // 2
+                box_w = int(med_w * 3.0)
+                box_h = int(box_w * (3.0 / 4.0)) # 4:3 natural webcam aspect
+                box_w = max(420, min(640, box_w))
+                box_h = max(315, min(480, box_h))
+                crop_x = max(0, min(1920 - box_w, center_x - box_w // 2))
+                crop_y = max(0, min(1080 - box_h, center_y - box_h // 2))
+                return (box_w, box_h, crop_x, crop_y)
 
     except Exception as e:
         print(f"[FaceCam Auto-Detect] Warning: {e}. Using fallback.")
@@ -512,8 +523,8 @@ def render_clip(input_file, layout="split", font="glow", output=None, gemini=Fal
     rule = get_layout_rule(layout)
     margin_v = rule.subtitle_margin_v
 
-    # Detect facecam box dynamically
-    cam_crop = detect_streamer_facecam(input_file)
+    # Detect facecam box dynamically with layout isolation
+    cam_crop = detect_streamer_facecam(input_file, layout=rule.name)
     print(f"[AI Clipper Suite] Streamer FaceCam Frame: crop={cam_crop[0]}:{cam_crop[1]}:{cam_crop[2]}:{cam_crop[3]}")
 
     # Load word-level timestamps
