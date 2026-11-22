@@ -209,11 +209,11 @@ def detect_streamer_facecam(video_path, layout='circle'):
     Scans video frames with YuNet neural detector across the frame to dynamically locate
     the streamer's webcam crop box in 1920x1080 coordinate space.
     - For 'circle' / 'circle_pip': Uses smart tight 1.75x square zoom to cleanly frame face in circle.
-    - For 'split', 'pip', 'blur': Preserves original full webcam rectangular frame (aspect ratio 4:3 / 16:9)
-      without zooming in uncomfortably onto face.
+    - For 'split', 'pip', 'blur': Uses the exact calibrated webcam box (270x150, ratio 1.8) that
+      perfectly fits top/corner webcam boxes without bleeding and cuts out bottom stream chat.
     Returns (crop_w, crop_h, crop_x, crop_y) in 1920x1080 space.
     """
-    default_crop_1080p = (360, 360, 65, 440) if layout in ('circle', 'circle_pip') else (480, 360, 20, 380)
+    default_crop_1080p = (360, 360, 65, 440) if layout in ('circle', 'circle_pip') else (270, 150, 65, 440)
     try:
         import cv2
         import numpy as np
@@ -252,12 +252,12 @@ def detect_streamer_facecam(video_path, layout='circle'):
             if faces is not None:
                 for f in faces:
                     score = f[-1]
-                    if score >= 0.40:
-                        gx = f[0] * (fw / 320.0)
-                        gy = f[1] * (fh / 320.0)
-                        gw = f[2] * (fw / 320.0)
-                        gh = f[3] * (fh / 320.0)
-                        detections.append((gx, gy, gw, gh, score))
+                    if score >= 0.35:
+                        fx = f[0] * (fw / 320.0)
+                        fy = f[1] * (fh / 320.0)
+                        fw_box = f[2] * (fw / 320.0)
+                        fh_box = f[3] * (fh / 320.0)
+                        detections.append((fx, fy, fw_box, fh_box, score))
         cap.release()
 
         if detections:
@@ -281,16 +281,14 @@ def detect_streamer_facecam(video_path, layout='circle'):
                 crop_y = max(0, min(1080 - cam_size, center_y - cam_size // 2))
                 return (cam_size, cam_size, crop_x, crop_y)
             else:
-                # Original Natural Framing for Split, PIP, and Blur:
-                # 2.8x - 3.2x framing preserves the entire creator webcam room/setup (4:3 aspect box)
-                center_y = med_y + med_h // 2
-                box_w = int(med_w * 3.0)
-                box_h = int(box_w * (3.0 / 4.0)) # 4:3 natural webcam aspect
-                box_w = max(420, min(640, box_w))
-                box_h = max(315, min(480, box_h))
-                crop_x = max(0, min(1920 - box_w, center_x - box_w // 2))
-                crop_y = max(0, min(1080 - box_h, center_y - box_h // 2))
-                return (box_w, box_h, crop_x, crop_y)
+                # Locked Optimal Framing for Split (1080x600), Corner PIP (428x241) & Blur (548x308):
+                # 270x150 (ratio 1.8 matching 1080x600 top webcam & 428x241 / 548x308)
+                # Centers horizontally on streamer face and crops above live chat comments
+                box_w = 270
+                box_h = 150
+                box_x = max(0, min(1920 - box_w, center_x - box_w // 2))
+                box_y = max(0, min(1080 - box_h, med_y - int(box_h * 0.4)))
+                return (box_w, box_h, box_x, box_y)
 
     except Exception as e:
         print(f"[FaceCam Auto-Detect] Warning: {e}. Using fallback.")
