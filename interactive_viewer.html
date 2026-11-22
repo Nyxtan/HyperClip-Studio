@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HyperClip Studio — Autonomous AI Stream Clipper</title>
+  <title>NyxClip Studio — Autonomous AI Stream Clipper</title>
   
   <!-- Modern Clean Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1138,8 +1138,8 @@
   <!-- Top Navigation with Brand & Creator Attribution Line -->
   <nav class="top-nav">
     <div class="brand-group">
-      <div class="brand-logo">HyperClip<span>.</span></div>
-      <div class="brand-tagline">HyperClip Studio — Built by <strong>Nyxtan</strong></div>
+      <div class="brand-logo">NyxClip<span>.</span></div>
+      <div class="brand-tagline">NyxClip Studio — Built by <strong>Nyxtan</strong></div>
     </div>
     <ul class="nav-links">
       <li><a href="#reposSection" class="active">Repositories</a></li>
@@ -1208,11 +1208,11 @@
 
       <div class="repos-grid">
         
-        <!-- Repo 1: HyperClip-Studio (Our Native Stream Stack) -->
-        <div class="repo-card selected-repo" id="cardRepoGta" onclick="selectRepo('HyperClip-Studio', 'https://github.com/Nyxtan/HyperClip-Studio.git', this)">
+        <!-- Repo 1: NyxClip-Studio (Our Native Stream Stack) -->
+        <div class="repo-card selected-repo" id="cardRepoGta" onclick="selectRepo('NyxClip-Studio', 'https://github.com/Nyxtan/NyxClip-Studio.git', this)">
           <div>
-            <span class="repo-badge">HyperClip Core Engine</span>
-            <h3 class="repo-name">HyperClip-Studio</h3>
+            <span class="repo-badge">NyxClip Core Engine</span>
+            <h3 class="repo-name">NyxClip-Studio</h3>
             <p class="repo-desc">
               The exact live stream engine we are running right now! Continuously monitors live YouTube streams, detects excitement bursts in live chat, clips 30-sec highlights, romanizes Hindi/English speech into clean captions, masks swears, and auto-schedules to YouTube & Instagram.
             </p>
@@ -1225,7 +1225,7 @@
           </div>
           <div class="repo-btn-group">
             <button class="btn-select-repo">Selected Engine</button>
-            <a href="https://github.com/Nyxtan/HyperClip-Studio" target="_blank" class="btn-github-external" onclick="event.stopPropagation()">View on GitHub ↗</a>
+            <a href="https://github.com/Nyxtan/NyxClip-Studio" target="_blank" class="btn-github-external" onclick="event.stopPropagation()">View on GitHub ↗</a>
           </div>
         </div>
 
@@ -1587,7 +1587,7 @@
           <div>
             <div class="prompt-box-title">CLIP RUNNER & PRESET PROMPT</div>
             <div class="selection-summary">
-              Repo: <span id="summaryRepo">HyperClip-Studio</span> • Layout: <span id="summaryLayout">50/50 Vertical Split</span> • Subtitles: <span id="summaryFont">The Bold Font (Hormozi)</span> • Quality: <span id="summaryQuality">1080x1920 Full HD</span> • Mode: <span id="summaryMode">Live Chat Spikes</span> • Pacing: <span id="summaryPacing">Safe Anti-Spam Delay</span>
+              Repo: <span id="summaryRepo">NyxClip-Studio</span> • Layout: <span id="summaryLayout">50/50 Vertical Split</span> • Subtitles: <span id="summaryFont">The Bold Font (Hormozi)</span> • Quality: <span id="summaryQuality">1080x1920 Full HD</span> • Mode: <span id="summaryMode">Live Chat Spikes</span> • Pacing: <span id="summaryPacing">Safe Anti-Spam Delay</span>
             </div>
           </div>
           <button class="copy-pill-btn" id="copyBtn" onclick="copyMasterPrompt()">
@@ -1601,8 +1601,8 @@
 
     <script>
     // State
-    let selectedRepoName = 'HyperClip-Studio';
-    let selectedRepoUrl = 'https://github.com/Nyxtan/HyperClip-Studio.git';
+    let selectedRepoName = 'NyxClip-Studio';
+    let selectedRepoUrl = 'https://github.com/Nyxtan/NyxClip-Studio.git';
     let selectedLayoutMode = 'A';
     let selectedLayoutName = '50/50 Vertical Split';
     let selectedFontKey = 'glow';
@@ -1803,7 +1803,7 @@ if ($latest) {
       if (selectedResolution === '1080p') qualityFlag = '1080';
       else if (selectedResolution === '720p') qualityFlag = '720';
 
-      const promptTemplate = `You are an autonomous AI coding agent. Execute the stream clipping engine in HyperClip Studio with the following configuration:
+      const promptTemplate = `You are an autonomous AI coding agent. Execute the stream clipping engine in NyxClip Studio with the following configuration:
 
 Configuration:
 - Layout: ${selectedLayoutName} (--layout ${layoutFlag})
@@ -1825,11 +1825,11 @@ Process the stream and notify me with the output file path when done!`;
 
         function copyRepoInstallPrompt(e) {
       if (e) e.stopPropagation();
-      const installPrompt = `You are an autonomous AI coding agent. Clone, setup dependencies, and verify the HyperClip Studio stream clipping engine on my computer:
+      const installPrompt = `You are an autonomous AI coding agent. Clone, setup dependencies, and verify the NyxClip Studio stream clipping engine on my computer:
 
 1. Clone Repository:
-   git clone https://github.com/Nyxtan/HyperClip-Studio.git
-   cd HyperClip-Studio
+   git clone https://github.com/Nyxtan/NyxClip-Studio.git
+   cd NyxClip-Studio
 
 2. Setup Python Virtual Environment:
    python -m venv .venv
@@ -1847,7 +1847,7 @@ Process the stream and notify me with the output file path when done!`;
 Notify me once the installation and environment verification are complete!`;
 
       navigator.clipboard.writeText(installPrompt).then(() => {
-        showToast("✅ HyperClip Install Prompt Copied to Clipboard!");
+        showToast("✅ NyxClip Install Prompt Copied to Clipboard!");
       });
     }
 
