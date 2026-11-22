@@ -8,6 +8,12 @@ CRITICAL ARCHITECTURAL CONSTRAINTS:
 1. 'circle' / 'circle_pip' is strictly isolated. Changes to other layouts NEVER bleed into circle_pip.
 2. Coordinates, aspect ratios, subtitle margins, and filter complexes for each layout are locked.
 3. Overrides cannot mutate these parameters at runtime.
+
+DETAILED SPECIFICATIONS:
+- Sample 1 ('split'): 50/50 Seam Split. Facecam top (1080x600), Gameplay bottom (1080x1320). Subtitle right at Y=600 divider (margin_v=1270).
+- Sample 2 ('pip'): Floating Corner PiP. Fullscreen 9:16 gameplay with top-right bordered webcam box (428x241 at 612:80). Subtitle lower-third (margin_v=420).
+- Sample 3 ('blur'): Blurred Mirror Backdrop. Centered 16:9 gameplay (Y=656), top centered webcam (548x308 at 266:250), soft boxblur=25:5 background. Subtitle lower-third (margin_v=460).
+- Sample 4 ('circle' / 'circle_pip'): Circular PiP. 9:16 vertical gameplay + floating top-right (660:80) 360px circular facecam with animated completion timer ring. Subtitle lower-third (margin_v=420).
 """
 
 from dataclasses import dataclass
@@ -16,6 +22,7 @@ from typing import Tuple, Dict, Any
 @dataclass(frozen=True)
 class LayoutRule:
     name: str
+    sample_id: str           # 'sample1', 'sample2', 'sample3', 'sample4'
     description: str
     target_width: int
     target_height: int
@@ -27,17 +34,82 @@ class LayoutRule:
     webcam_crop_mode: str    # 'square_center', 'aspect_box', 'fixed'
     webcam_target_size: Tuple[int, int]
     webcam_overlay_pos: Tuple[int, int]
+    webcam_border_pad: Tuple[int, int, str]  # (pad_w, pad_h, border_color) e.g. (428, 241, 'white')
     timer_ring_enabled: bool
 
 
 # === MASTER IMMUTABLE RULEBOOK ===
 LAYOUT_RULES: Dict[str, LayoutRule] = {
     # -------------------------------------------------------------
-    # 1. CIRCLE / CIRCLE_PIP (THE LOCKED SIGNATURE FORMAT)
+    # SAMPLE 1: 50 / 50 SEAM SPLIT (MODE A)
+    # -------------------------------------------------------------
+    'split': LayoutRule(
+        name='split',
+        sample_id='sample1',
+        description='Facecam top (1080x600), Gameplay bottom (1080x1320), Bebas Glow subtitle right at Y=600 seam divider',
+        target_width=1080,
+        target_height=1920,
+        subtitle_margin_v=1270,      # Positioned right at Y=600 divider
+        subtitle_alignment=2,
+        square_pixel_sar=True,
+        has_background_blur=False,
+        webcam_type='top_banner',
+        webcam_crop_mode='aspect_box',
+        webcam_target_size=(1080, 600),
+        webcam_overlay_pos=(0, 0),
+        webcam_border_pad=(1080, 600, 'none'),
+        timer_ring_enabled=False
+    ),
+
+    # -------------------------------------------------------------
+    # SAMPLE 2: FLOATING CORNER PIP (MODE B)
+    # -------------------------------------------------------------
+    'pip': LayoutRule(
+        name='pip',
+        sample_id='sample2',
+        description='Fullscreen 9:16 gameplay with top-right bordered webcam box (428x241 at 612:80) and TikTok subtitles',
+        target_width=1080,
+        target_height=1920,
+        subtitle_margin_v=420,       # Lower-third placement
+        subtitle_alignment=2,
+        square_pixel_sar=True,
+        has_background_blur=False,
+        webcam_type='pip_rect',
+        webcam_crop_mode='aspect_box',
+        webcam_target_size=(420, 233),
+        webcam_overlay_pos=(612, 80),
+        webcam_border_pad=(428, 241, 'white'),
+        timer_ring_enabled=False
+    ),
+
+    # -------------------------------------------------------------
+    # SAMPLE 3: BLURRED MIRROR BACKDROP (MODE D)
+    # -------------------------------------------------------------
+    'blur': LayoutRule(
+        name='blur',
+        sample_id='sample3',
+        description='Centered 16:9 gameplay (Y=656), top centered webcam (548x308 at 266:250), soft blurred background fill (boxblur=25:5)',
+        target_width=1080,
+        target_height=1920,
+        subtitle_margin_v=460,       # Lower-third placement under center gameplay
+        subtitle_alignment=2,
+        square_pixel_sar=True,
+        has_background_blur=True,
+        webcam_type='top_cam',
+        webcam_crop_mode='aspect_box',
+        webcam_target_size=(540, 300),
+        webcam_overlay_pos=(266, 250),
+        webcam_border_pad=(548, 308, 'white'),
+        timer_ring_enabled=False
+    ),
+
+    # -------------------------------------------------------------
+    # SAMPLE 4: CIRCLE PIP / THE LOCKED SIGNATURE FORMAT
     # -------------------------------------------------------------
     'circle': LayoutRule(
         name='circle',
-        description='Full 9:16 vertical gameplay + floating top-right circular webcam with animated completion timer ring',
+        sample_id='sample4',
+        description='Full 9:16 vertical gameplay + floating top-right circular webcam (360px at 660:80) with animated completion timer ring',
         target_width=1080,
         target_height=1920,
         subtitle_margin_v=420,       # Exact lower-third placement over gameplay
@@ -48,10 +120,12 @@ LAYOUT_RULES: Dict[str, LayoutRule] = {
         webcam_crop_mode='square_center', # Crop center square of facecam
         webcam_target_size=(360, 360),
         webcam_overlay_pos=(660, 80),     # Top-right floating position
+        webcam_border_pad=(360, 360, 'mask'),
         timer_ring_enabled=True
     ),
     'circle_pip': LayoutRule(
         name='circle_pip',
+        sample_id='sample4',
         description='Alias for circle layout',
         target_width=1080,
         target_height=1920,
@@ -63,64 +137,8 @@ LAYOUT_RULES: Dict[str, LayoutRule] = {
         webcam_crop_mode='square_center',
         webcam_target_size=(360, 360),
         webcam_overlay_pos=(660, 80),
+        webcam_border_pad=(360, 360, 'mask'),
         timer_ring_enabled=True
-    ),
-
-    # -------------------------------------------------------------
-    # 2. SPLIT / MODE A
-    # -------------------------------------------------------------
-    'split': LayoutRule(
-        name='split',
-        description='Streamer top (1080x600), Gameplay bottom (1080x1320), subtitle right at divider',
-        target_width=1080,
-        target_height=1920,
-        subtitle_margin_v=1270,      # Positioned right at Y=600 divider
-        subtitle_alignment=2,
-        square_pixel_sar=True,
-        has_background_blur=False,
-        webcam_type='top_banner',
-        webcam_crop_mode='aspect_box',
-        webcam_target_size=(1080, 600),
-        webcam_overlay_pos=(0, 0),
-        timer_ring_enabled=False
-    ),
-
-    # -------------------------------------------------------------
-    # 3. CORNER PIP / MODE B
-    # -------------------------------------------------------------
-    'pip': LayoutRule(
-        name='pip',
-        description='Full 9:16 vertical gameplay + rectangular bordered webcam at Top-Right',
-        target_width=1080,
-        target_height=1920,
-        subtitle_margin_v=420,
-        subtitle_alignment=2,
-        square_pixel_sar=True,
-        has_background_blur=False,
-        webcam_type='pip_rect',
-        webcam_crop_mode='aspect_box',
-        webcam_target_size=(420, 233),
-        webcam_overlay_pos=(612, 80),
-        timer_ring_enabled=False
-    ),
-
-    # -------------------------------------------------------------
-    # 4. BLUR BACKDROP / MODE D
-    # -------------------------------------------------------------
-    'blur': LayoutRule(
-        name='blur',
-        description='Blurred backdrop fill + 16:9 center gameplay + top centered webcam',
-        target_width=1080,
-        target_height=1920,
-        subtitle_margin_v=460,
-        subtitle_alignment=2,
-        square_pixel_sar=True,
-        has_background_blur=True,
-        webcam_type='top_cam',
-        webcam_crop_mode='aspect_box',
-        webcam_target_size=(540, 300),
-        webcam_overlay_pos=(266, 250),
-        timer_ring_enabled=False
     )
 }
 
@@ -128,17 +146,18 @@ LAYOUT_RULES: Dict[str, LayoutRule] = {
 def get_layout_rule(layout_name: str) -> LayoutRule:
     """
     Retrieves the locked LayoutRule for the specified layout.
+    Accepts layout name or sample alias ('sample1', 'sample2', 'sample3', 'sample4', '1', '2', '3', '4').
     Defaults to 'circle' if unspecified or unknown.
     """
     key = str(layout_name).strip().lower()
-    if key in ('c', '3'):
-        key = 'circle'
-    elif key in ('a', '1'):
+    if key in ('sample1', 'split', 'a', '1'):
         key = 'split'
-    elif key in ('b', '2'):
+    elif key in ('sample2', 'pip', 'b', '2'):
         key = 'pip'
-    elif key in ('d', '4'):
+    elif key in ('sample3', 'blur', 'd', '3'):
         key = 'blur'
+    elif key in ('sample4', 'circle', 'circle_pip', 'c', '4'):
+        key = 'circle'
 
     if key not in LAYOUT_RULES:
         print(f"[Layout Rulebook Warning] Unknown layout '{layout_name}'. Defaulting to locked 'circle' rule.")
