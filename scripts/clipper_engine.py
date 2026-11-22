@@ -239,8 +239,12 @@ def detect_streamer_facecam(video_path, layout='circle'):
 
         detector = cv2.FaceDetectorYN.create(model_path, "", (320, 320), 0.35, 0.3, 5000)
         detections = []
-        sample_indices = np.linspace(10, max(11, total_frames - 10), num=12, dtype=int)
+        sample_indices = np.linspace(10, max(11, total_frames - 10), num=15, dtype=int)
 
+        # In gaming streams, gameplay characters / cutscenes move across the screen and appear/disappear,
+        # while the real human streamer sits in a static webcam box (typically in corners: TL, TR, BL, BR).
+        # We collect all detections and cluster by spatial consistency.
+        detections = []
         for idx in sample_indices:
             cap.set(cv2.CAP_PROP_POS_FRAMES, int(idx))
             ok, frame = cap.read()
@@ -252,7 +256,7 @@ def detect_streamer_facecam(video_path, layout='circle'):
             if faces is not None:
                 for f in faces:
                     score = f[-1]
-                    if score >= 0.35:
+                    if score >= 0.40:
                         fx = f[0] * (fw / 320.0)
                         fy = f[1] * (fh / 320.0)
                         fw_box = f[2] * (fw / 320.0)
@@ -261,22 +265,55 @@ def detect_streamer_facecam(video_path, layout='circle'):
         cap.release()
 
         if detections:
+            # Cluster detections spatially (within 160px distance threshold in 1080p space)
+            # The streamer webcam is the most stable cluster across frames.
+            clusters = []
+            for d in detections:
+                matched = False
+                for c in clusters:
+                    ref = c[0]
+                    dist = np.hypot(ref[0] - d[0], ref[1] - d[1])
+                    if dist < 160:
+                        c.append(d)
+                        matched = True
+                        break
+                if not matched:
+                    clusters.append([d])
+
+            # Rank clusters:
+            # 1. Frequency (streamer appears in highest number of sampled frames)
+            # 2. Position bias (corner / periphery webcams are much more likely streamer than center screen gameplay)
+            def cluster_score(cl):
+                pts = np.array(cl)
+                med_cx = np.median(pts[:, 0] + pts[:, 2] / 2.0)
+                med_cy = np.median(pts[:, 1] + pts[:, 3] / 2.0)
+                # Distance from center of 1920x1080: periphery = higher score
+                dist_from_center = np.hypot(med_cx - 960, med_cy - 540)
+                periphery_bias = dist_from_center / 1100.0  # ~0.0 at center, ~0.9 at corners
+                # Hits count is key (streamer is in almost all frames)
+                hits = len(cl)
+                return hits * 10.0 + periphery_bias * 5.0
+
+            clusters.sort(key=cluster_score, reverse=True)
+            best_cluster = clusters[0]
+
+            pts = np.array(best_cluster)
             sx = 1920.0 / fw
             sy = 1080.0 / fh
 
-            med_x = int(np.median([d[0] for d in detections]) * sx)
-            med_y = int(np.median([d[1] for d in detections]) * sy)
-            med_w = int(np.median([d[2] for d in detections]) * sx)
-            med_h = int(np.median([d[3] for d in detections]) * sy)
+            med_x = int(np.median(pts[:, 0]) * sx)
+            med_y = int(np.median(pts[:, 1]) * sy)
+            med_w = int(np.median(pts[:, 2]) * sx)
+            med_h = int(np.median(pts[:, 3]) * sy)
 
             center_x = med_x + med_w // 2
+            center_y = med_y + med_h // 2
 
             if layout in ('circle', 'circle_pip'):
                 # Smart Tight Zoom ONLY for Circular PIP:
-                # 1.75x face size perfectly frames head & face inside 360 circle
-                center_y = med_y + int(med_h * 0.42)
-                cam_size = int(max(med_w, med_h) * 1.75)
-                cam_size = max(180, min(380, cam_size))
+                # 2.0x face size cleanly frames head & face inside 360 circle
+                cam_size = int(max(med_w, med_h) * 2.0)
+                cam_size = max(200, min(380, cam_size))
                 crop_x = max(0, min(1920 - cam_size, center_x - cam_size // 2))
                 crop_y = max(0, min(1080 - cam_size, center_y - cam_size // 2))
                 return (cam_size, cam_size, crop_x, crop_y)
