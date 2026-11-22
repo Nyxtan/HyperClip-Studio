@@ -961,7 +961,7 @@ def cut(chunk_path, words, start, length, out_mp4, credit, crop=False, crop_offs
             ], check=True)
             render_clip(
                 input_file=tmp_slice,
-                layout="circle" if layout in {"circle", "circle_pip"} else layout,
+                layout=layout,
                 font=font,
                 output=out_mp4,
                 gemini=False,

@@ -28,6 +28,7 @@ import re
 import argparse
 import subprocess
 from datetime import datetime, timezone
+from layout_rulebook import get_layout_rule, build_filter_for_rule, LayoutRule
 import urllib.request
 import urllib.parse
 import urllib.error
@@ -289,56 +290,9 @@ def detect_streamer_facecam(video_path):
 # 3. VIDEO RENDERING LAYOUT FILTERS
 # -------------------------------------------------------------
 def build_layout_filter(layout, ass_file, cam_crop=(360, 270, 15, 440)):
+    rule = get_layout_rule(layout)
     ass_escaped = os.path.basename(ass_file)
-    fonts_arg = "ass=filename=" + ass_escaped + ":fontsdir=assets/fonts"
-    cw, ch, cx, cy = cam_crop
-
-    if layout in ['split', 'A']:
-        # Streamer Facecam top (1080x600), Gameplay starts immediately below (1080x1320 full footage)
-        # Ratio for 1080x1320 is 0.818: crop 884x1080 from center of 1920x1080 source
-        # Preserve facecam aspect ratio (avoid horizontal stretching if crop is square)
-        return (
-            f"[0:v]setpts=PTS-STARTPTS,scale=1920:1080:flags=lanczos,split=2[v_cam_in][v_game_in];"
-            f"[v_cam_in]crop={cw}:{ch}:{cx}:{cy},scale=1080:600:force_original_aspect_ratio=increase:flags=lanczos,crop=1080:600[cam];"
-            f"[v_game_in]crop=884:1080:518:0,scale=1080:1320:flags=lanczos[game];"
-            f"[cam][game]vstack=inputs=2[v_split];"
-            f"[v_split]{fonts_arg},setsar=1:1[outv]"
-        )
-    elif layout in ['pip', 'B']:
-        # Corner PIP: Full 9:16 vertical gameplay + floating bordered webcam at Top-Right (612, 80)
-        # Preserve facecam aspect ratio (avoid horizontal stretching if crop is square)
-        return (
-            f"[0:v]setpts=PTS-STARTPTS,scale=1920:1080:flags=lanczos,split=2[v_bg_in][v_pip_in];"
-            f"[v_bg_in]crop=607:1080:656:0,scale=1080:1920:flags=lanczos[bg];"
-            f"[v_pip_in]crop={cw}:{ch}:{cx}:{cy},scale=420:233:force_original_aspect_ratio=increase:flags=lanczos,crop=420:233,pad=428:241:4:4:white[cam_pip];"
-            f"[bg][cam_pip]overlay=612:80[v_pip];"
-            f"[v_pip]{fonts_arg},setsar=1:1[outv]"
-        )
-    elif layout in ['circle', 'circle_pip', 'C']:
-        # Circular PIP: Full 9:16 vertical gameplay + floating circular webcam with animated completion timer ring
-        return (
-            f"[0:v]setpts=PTS-STARTPTS,scale=1920:1080:flags=lanczos,split=2[v_bg_in][v_sq_in];"
-            f"[v_bg_in]crop=607:1080:656:0,scale=1080:1920:flags=lanczos[bg];"
-            f"[v_sq_in]crop={ch}:{ch}:{cx + (cw-ch)//2}:{cy},scale=360:360:flags=lanczos[cam_sq];"
-            f"[1:v]scale=360:360[mask];"
-            f"[2:v]scale=360:360[timer_ring];"
-            f"[cam_sq][mask]alphamerge[cam_circle];"
-            f"[cam_circle][timer_ring]overlay=0:0[cam_ring];"
-            f"[bg][cam_ring]overlay=660:80[v_circ];"
-            f"[v_circ]{fonts_arg},setsar=1:1[outv]"
-        )
-    else:
-        # Blurred Backdrop: Aspect-fill 3414x1920 center-crop 1080x1920 blurred + center 16:9 gameplay + top centered webcam
-        # Preserve facecam aspect ratio (avoid horizontal stretching if crop is square)
-        return (
-            f"[0:v]setpts=PTS-STARTPTS,scale=1920:1080:flags=lanczos,split=3[v_blur_in][v_game_in][v_top_in];"
-            f"[v_blur_in]scale=3414:1920:flags=bilinear,crop=1080:1920,boxblur=25:5[bg_blur];"
-            f"[v_game_in]scale=1080:608:flags=lanczos[center_game];"
-            f"[v_top_in]crop={cw}:{ch}:{cx}:{cy},scale=540:300:force_original_aspect_ratio=increase:flags=lanczos,crop=540:300,pad=548:308:4:4:white[top_cam];"
-            f"[bg_blur][center_game]overlay=0:656[v_mid];"
-            f"[v_mid][top_cam]overlay=266:250[v_comp];"
-            f"[v_comp]{fonts_arg},setsar=1:1[outv]"
-        )
+    return build_filter_for_rule(rule, ass_escaped, cam_crop)
 
 def get_media_duration(file_path):
     """Accurately extracts media duration in seconds using ffprobe."""
@@ -554,10 +508,9 @@ def render_clip(input_file, layout="split", font="glow", output=None, gemini=Fal
     if not os.path.exists(input_file) and not input_file.startswith("http"):
         raise FileNotFoundError(f"Input file not found: {input_file}")
 
-    # Determine MarginV based on layout
-    # For split: bottom margin is 1920 - 600 - text_height ≈ 1280 to position subtitle right at Y=600 divider
-    # For circle / pip: 420 places subtitles cleanly in the lower-third directly over the gameplay without blur
-    margin_v = 1270 if layout in ['split', 'A'] else (420 if layout in ['pip', 'B'] else 420)
+    # Retrieve locked rule from single source of truth Layout Rulebook
+    rule = get_layout_rule(layout)
+    margin_v = rule.subtitle_margin_v
 
     # Detect facecam box dynamically
     cam_crop = detect_streamer_facecam(input_file)
