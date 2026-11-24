@@ -1,0 +1,8 @@
+# ads.txt - Publisher Monetization Declarations
+# Reference: IAB Tech Lab ads.txt Specification
+
+# Google AdSense (अपना Publisher ID यहाँ 'pub-XXXXXXXXXXXXXXXX' की जगह डालें जब AdSense अप्रूव हो)
+# google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
+
+# Adsterra (यदि आप Adsterra उपयोग कर रहे हैं तो अपना Account ID यहाँ डालें)
+# adsterra.com, YOUR_ADSTERRA_PUBLISHER_ID, DIRECT
