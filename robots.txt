@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Google AdSense and Media Partners Crawler Access
+User-agent: Mediapartners-Google
+Allow: /
+
+User-agent: Google-Display-Ads-Bot
+Allow: /

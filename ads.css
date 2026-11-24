@@ -1,0 +1,105 @@
+/* Zero-CLS Ad Monetization Styles (Dark & Light Adaptive) */
+
+.ad-slot-wrapper {
+  width: 100%;
+  margin: 2.5rem auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  text-align: center;
+  position: relative;
+  z-index: 10;
+}
+
+.ad-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 8px;
+  user-select: none;
+}
+
+/* Header Banner Slot: Mobile 320x50 | Desktop 728x90 */
+.ad-slot-banner {
+  width: 100%;
+  max-width: 320px;
+  min-height: 50px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+@media (min-width: 768px) {
+  .ad-slot-banner {
+    max-width: 728px;
+    min-height: 90px;
+  }
+}
+
+/* In-Content Native / Rectangle Slot: Reserved 250px height */
+.ad-slot-incontent {
+  width: 100%;
+  max-width: 728px;
+  min-height: 250px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+/* Slim Dismissible Sticky Bottom Bar */
+.ad-sticky-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  min-height: 54px;
+  max-height: 60px;
+  background: #0e1118;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 36px 4px 8px;
+}
+
+@media (min-width: 768px) {
+  .ad-sticky-bottom {
+    max-height: 98px;
+  }
+}
+
+.ad-sticky-close {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  background: #1e222d;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 14px;
+  line-height: 1;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ad-sticky-close:hover {
+  background: #374151;
+}
