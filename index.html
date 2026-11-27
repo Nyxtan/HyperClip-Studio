@@ -2164,30 +2164,59 @@ Process the stream and notify me with the output file path when done!`;
       }
     });
 
-    // Dynamic OS detection for main download button
+    // Dynamic OS detection and automatic release asset resolver for download buttons
     (function detectOS() {
       const ua = navigator.userAgent || '';
       const platform = navigator.platform || '';
       const btn = document.getElementById('hero-download-btn');
       const icon = document.getElementById('hero-download-icon');
       const text = document.getElementById('hero-download-text');
+      const subWin = document.getElementById('sub-win-link');
+      const subMac = document.getElementById('sub-mac-link');
+      const subAndroid = document.getElementById('sub-android-link');
       if (!btn || !icon || !text) return;
 
-      const baseUrl = 'https://github.com/Nyxtan/NyxClip-Studio/releases/latest/download/';
+      // Smart defaults pointing directly to release assets
+      let winUrl = 'https://github.com/Nyxtan/NyxClip-Studio/releases/download/v1.0.0/NyxClip.Studio_1.0.0_x64-setup.exe';
+      let macUrl = 'https://github.com/Nyxtan/NyxClip-Studio/releases/download/v1.0.0/NyxClip.Studio_1.0.0_universal.dmg';
+      let androidUrl = 'https://github.com/Nyxtan/NyxClip-Studio/releases/download/v1.0.0/NyxClipStudio.apk';
 
-      if (/Android/i.test(ua)) {
-        btn.href = baseUrl + 'NyxClipStudio.apk';
-        icon.textContent = '📱';
-        text.textContent = 'Download for Android (.apk)';
-      } else if (/Mac|iPhone|iPad|iPod/i.test(platform) || /Mac/i.test(ua)) {
-        btn.href = baseUrl + 'NyxClipStudio.dmg';
-        icon.textContent = '🍎';
-        text.textContent = 'Download for macOS (.dmg)';
-      } else {
-        btn.href = baseUrl + 'NyxClipStudio-Setup.exe';
-        icon.textContent = '💻';
-        text.textContent = 'Download for Windows (.exe)';
+      function applyUrls() {
+        if (subWin) subWin.href = winUrl;
+        if (subMac) subMac.href = macUrl;
+        if (subAndroid) subAndroid.href = androidUrl;
+
+        if (/Android/i.test(ua)) {
+          btn.href = androidUrl;
+          icon.textContent = '📱';
+          text.textContent = 'Download for Android (.apk)';
+        } else if (/Mac|iPhone|iPad|iPod/i.test(platform) || /Mac/i.test(ua)) {
+          btn.href = macUrl;
+          icon.textContent = '🍎';
+          text.textContent = 'Download for macOS (.dmg)';
+        } else {
+          btn.href = winUrl;
+          icon.textContent = '💻';
+          text.textContent = 'Download for Windows (.exe)';
+        }
       }
+      applyUrls();
+
+      // Query latest release assets dynamically from GitHub API to always match exact release filenames
+      fetch('https://api.github.com/repos/Nyxtan/NyxClip-Studio/releases/latest')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (!data || !Array.isArray(data.assets)) return;
+          data.assets.forEach(asset => {
+            const name = (asset.name || '').toLowerCase();
+            const dl = asset.browser_download_url;
+            if (name.endsWith('.exe')) winUrl = dl;
+            else if (name.endsWith('.dmg')) macUrl = dl;
+            else if (name.endsWith('.apk')) androidUrl = dl;
+          });
+          applyUrls();
+        })
+        .catch(() => {});
     })();
 </script>
 
