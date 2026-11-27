@@ -35,8 +35,10 @@ jobs:
         with:
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install dependencies & Build dist
+        run: |
+          npm install
+          npm run build
 
       - name: Build Tauri Desktop App
         uses: tauri-apps/tauri-action@v0
@@ -67,9 +69,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install dependencies
+      - name: Install dependencies & Build Web Assets
         run: |
           npm install
+          npm run build
           npx cap add android || true
           npx cap sync android
 
@@ -79,8 +82,6 @@ jobs:
             cd android && ./gradlew assembleRelease
             mkdir -p ../dist-apk
             cp app/build/outputs/apk/release/*.apk ../dist-apk/NyxClipStudio.apk || cp app/build/outputs/apk/debug/*.apk ../dist-apk/NyxClipStudio.apk
-          else
-            echo "Android folder prepared via capacitor"
           fi
 
       - name: Upload APK to Release
