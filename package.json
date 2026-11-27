@@ -4,10 +4,10 @@
   "description": "Autonomous AI Stream and Video Clipper",
   "main": "index.html",
   "scripts": {
+    "build": "node scripts/build-dist.js",
     "tauri": "tauri",
     "cap:sync": "cap sync",
-    "cap:build": "cap build android",
-    "build": "echo 'Static web assets ready'"
+    "cap:build": "cap build android"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.0.0",
