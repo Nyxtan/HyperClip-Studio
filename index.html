@@ -1229,13 +1229,30 @@
       </p>
 
       <div class="hero-btn-row">
-        <button class="btn-purple-main" onclick="copyRepoInstallPrompt()">
-          ⚡ Copy One-Click Install Prompt
-        </button>
-        <button class="btn-dark-secondary" onclick="scrollToSection('reposSection')">
-          + Explore GitHub Repos
-        </button>
+        <a id="hero-download-btn" class="btn-purple-main" href="https://github.com/Nyxtan/NyxClip-Studio/releases/latest/download/NyxClipStudio-Setup.exe">
+          <span id="hero-download-icon">💻</span>
+          <span id="hero-download-text">Download for Windows (.exe)</span>
+        </a>
+        <a class="btn-dark-secondary" href="studio.html">
+          🌐 Try Web Studio (No Install)
+        </a>
       </div>
+
+      <div class="hero-platform-sub-row" style="margin-top:14px;font-size:13px;color:#94A3B8;">
+        <span>Other platforms:</span>
+        <a id="sub-win-link" href="https://github.com/Nyxtan/NyxClip-Studio/releases/latest/download/NyxClipStudio-Setup.exe" style="color:#C4B5FD;text-decoration:none;margin-left:6px;">Windows (.exe)</a> •
+        <a id="sub-mac-link" href="https://github.com/Nyxtan/NyxClip-Studio/releases/latest/download/NyxClipStudio.dmg" style="color:#C4B5FD;text-decoration:none;margin-left:4px;">macOS (.dmg)</a> •
+        <a id="sub-android-link" href="https://github.com/Nyxtan/NyxClip-Studio/releases/latest/download/NyxClipStudio.apk" style="color:#C4B5FD;text-decoration:none;margin-left:4px;">Android APK</a>
+      </div>
+
+      <!-- SmartScreen / Gatekeeper Security Guidance -->
+      <details style="margin-top:16px;max-width:580px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 14px;font-size:12.5px;color:#CBD5E1;">
+        <summary style="cursor:pointer;color:#A78BFA;font-weight:600;">ℹ️ Installing on Windows or macOS? Quick Help</summary>
+        <div style="margin-top:8px;line-height:1.5;">
+          <p><strong>Windows:</strong> If SmartScreen says "Windows protected your PC", click <em>More info</em> → <em>Run anyway</em> (standard for newly released open-source builds).</p>
+          <p style="margin-top:4px;"><strong>macOS:</strong> If Gatekeeper blocks open, open Terminal and run: <code style="background:#000;padding:2px 6px;border-radius:4px;">xattr -c /Applications/NyxClipStudio.app</code> or use the <strong>Web Studio</strong> directly in Safari.</p>
+        </div>
+      </details>
     </div>
 
   </div>
@@ -2147,6 +2164,31 @@ Process the stream and notify me with the output file path when done!`;
       }
     });
 
+    // Dynamic OS detection for main download button
+    (function detectOS() {
+      const ua = navigator.userAgent || '';
+      const platform = navigator.platform || '';
+      const btn = document.getElementById('hero-download-btn');
+      const icon = document.getElementById('hero-download-icon');
+      const text = document.getElementById('hero-download-text');
+      if (!btn || !icon || !text) return;
+
+      const baseUrl = 'https://github.com/Nyxtan/NyxClip-Studio/releases/latest/download/';
+
+      if (/Android/i.test(ua)) {
+        btn.href = baseUrl + 'NyxClipStudio.apk';
+        icon.textContent = '📱';
+        text.textContent = 'Download for Android (.apk)';
+      } else if (/Mac|iPhone|iPad|iPod/i.test(platform) || /Mac/i.test(ua)) {
+        btn.href = baseUrl + 'NyxClipStudio.dmg';
+        icon.textContent = '🍎';
+        text.textContent = 'Download for macOS (.dmg)';
+      } else {
+        btn.href = baseUrl + 'NyxClipStudio-Setup.exe';
+        icon.textContent = '💻';
+        text.textContent = 'Download for Windows (.exe)';
+      }
+    })();
 </script>
 
 <!-- AD_SLOT: STICKY_FOOTER (Dismissible Slim Sticky Bottom Bar - Better Ads Compliant) -->

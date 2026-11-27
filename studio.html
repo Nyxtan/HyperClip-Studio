@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NyxClip Studio — Web & Desktop Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@800;900&family=Public+Sans:wght@400;500;600;700;800&family=Bebas+Neue&family=Montserrat:wght@900&family=Rubik:wght@900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090A0F;
+      --card: #12141D;
+      --border: rgba(255, 255, 255, 0.08);
+      --primary: #8B5CF6;
+      --primary-hover: #7C3AED;
+      --accent: #22C55E;
+      --text: #F8FAFC;
+      --muted: #94A3B8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Public Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 16px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      background: rgba(9, 10, 15, 0.85);
+      backdrop-filter: blur(12px);
+    }
+    .logo {
+      font-family: 'Exo 2', sans-serif;
+      font-weight: 900;
+      font-size: 20px;
+      color: #FFF;
+      text-decoration: none;
+    }
+    .logo span { color: var(--primary); }
+    .nav-actions { display: flex; gap: 12px; align-items: center; }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn-ghost:hover { color: #FFF; border-color: rgba(255, 255, 255, 0.2); }
+    .btn-primary {
+      background: var(--primary);
+      color: #FFF;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 6px;
+      font-size: 13.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary:hover { background: var(--primary-hover); }
+
+    .main-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 360px 1fr 340px;
+      height: calc(100vh - 65px);
+      overflow: hidden;
+    }
+    @media (max-width: 1024px) {
+      .main-grid { grid-template-columns: 1fr; height: auto; overflow: visible; }
+    }
+
+    /* Left Sidebar: Controls & Highlights */
+    .panel {
+      padding: 24px;
+      overflow-y: auto;
+      border-right: 1px solid var(--border);
+      background: var(--card);
+    }
+    .panel-right {
+      border-right: none;
+      border-left: 1px solid var(--border);
+    }
+    .section-title {
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .dropzone {
+      border: 2px dashed rgba(139, 92, 246, 0.4);
+      background: rgba(139, 92, 246, 0.04);
+      border-radius: 12px;
+      padding: 32px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .dropzone:hover {
+      border-color: var(--primary);
+      background: rgba(139, 92, 246, 0.08);
+    }
+    .dropzone p { font-size: 13.5px; color: #CBD5E1; margin-top: 8px; }
+    .dropzone small { font-size: 11.5px; color: var(--muted); display: block; margin-top: 4px; }
+
+    /* Center: 9:16 Live Canvas Preview */
+    .preview-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      position: relative;
+      padding: 20px;
+    }
+    .canvas-wrapper {
+      position: relative;
+      width: 360px;
+      height: 640px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      background: #0B0D13;
+    }
+    #preview-canvas {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    video#hidden-source { display: none; }
+
+    /* Right: Layout & Subtitle Presets */
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .preset-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: #CBD5E1;
+      padding: 12px 10px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .preset-btn.active, .preset-btn:hover {
+      border-color: var(--primary);
+      background: rgba(139, 92, 246, 0.15);
+      color: #FFF;
+    }
+
+    .clip-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s;
+    }
+    .clip-item:hover, .clip-item.active {
+      border-color: var(--accent);
+      background: rgba(34, 197, 94, 0.08);
+    }
+    .clip-info strong { display: block; font-size: 13px; color: #FFF; }
+    .clip-info span { font-size: 11.5px; color: var(--muted); }
+    .clip-score {
+      background: rgba(34, 197, 94, 0.15);
+      color: #4ADE80;
+      font-weight: 800;
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 10px;
+      display: none;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.1s;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="logo">NyxClip <span>Studio</span></a>
+    <div class="nav-actions">
+      <button class="btn-ghost" onclick="openSettings()">⚙️ BYOK Keys</button>
+      <a href="index.html" class="btn-ghost">← Back to Hub</a>
+      <button id="export-btn" class="btn-primary" onclick="handleExport()" disabled>
+        <span>💾 Export 9:16 Video (.mp4)</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="main-grid">
+    <!-- Left Panel: Ingestion & Clips -->
+    <div class="panel">
+      <div class="section-title">1. Local Video File</div>
+      <div class="dropzone" id="dropzone" onclick="document.getElementById('file-input').click()">
+        <span style="font-size:28px;">📁</span>
+        <p>Drop MP4, MOV, or WebM here</p>
+        <small>Processed 100% on your device (0 upload)</small>
+      </div>
+      <input type="file" id="file-input" accept="video/mp4,video/quicktime,video/webm" style="display:none;" onchange="handleFileSelect(event)">
+
+      <div style="margin-top: 28px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div class="section-title" style="margin:0;">2. AI Highlights (Energy RMS)</div>
+          <button id="detect-btn" class="btn-ghost" style="padding:4px 10px;font-size:11px;" onclick="runHighlightDetection()" disabled>⚡ Auto-Detect</button>
+        </div>
+        <div id="clips-list">
+          <p style="font-size:12.5px;color:var(--muted);">Load a video to detect top hype moments.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center Preview: Live 9:16 Canvas -->
+    <div class="preview-stage">
+      <div class="canvas-wrapper">
+        <canvas id="preview-canvas" width="720" height="1280"></canvas>
+      </div>
+      <div class="progress-bar" id="progress-container">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <video id="hidden-source" playsinline muted></video>
+    </div>
+
+    <!-- Right Panel: Styling & Presets -->
+    <div class="panel panel-right">
+      <div class="section-title">3. Vertical Layout Preset</div>
+      <div class="preset-grid">
+        <button class="preset-btn active" data-layout="blur" onclick="setLayout('blur', this)">🌫️ Blur 9:16</button>
+        <button class="preset-btn" data-layout="split" onclick="setLayout('split', this)">✂️ Split Cam</button>
+        <button class="preset-btn" data-layout="circle" onclick="setLayout('circle', this)">⭕ Circle Cam</button>
+        <button class="preset-btn" data-layout="pip" onclick="setLayout('pip', this)">📺 Picture-in-Pic</button>
+      </div>
+
+      <div class="section-title">4. Animated Captions</div>
+      <div class="preset-grid">
+        <button class="preset-btn active" data-style="hormozi" onclick="setSubtitleStyle('hormozi', this)">⚡ Hormozi Pop</button>
+        <button class="preset-btn" data-style="beast" onclick="setSubtitleStyle('beast', this)">🔥 Beast Glow</button>
+        <button class="preset-btn" data-style="neon" onclick="setSubtitleStyle('neon', this)">💎 Neon Cyan</button>
+        <button class="preset-btn" data-style="clean" onclick="setSubtitleStyle('clean', this)">✨ Clean Box</button>
+      </div>
+
+      <div class="section-title">5. Export Specs</div>
+      <div style="background:rgba(255,255,255,0.03);padding:14px;border-radius:8px;border:1px solid var(--border);font-size:12px;color:var(--muted);line-height:1.6;">
+        <div>Resolution: <strong>720 × 1280 (Vertical 9:16)</strong></div>
+        <div>Engine: <strong>Hardware WebCodecs (H.264 / AAC)</strong></div>
+        <div>RAM Usage: <strong>~30 MB (Zero Server Upload)</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { WebCodecsEngine } from './src/core/webcodecs_engine.js';
+    import { HighlightDetector } from './src/core/highlight_detector.js';
+    import { ByokService } from './src/core/byok_service.js';
+
+    let engine = new WebCodecsEngine({ width: 720, height: 1280, fps: 30 });
+    let currentVideoFile = null;
+    let selectedLayout = 'blur';
+    let selectedStyle = 'hormozi';
+    let activeClip = { start: 0, end: 15 };
+    const video = document.getElementById('hidden-source');
+    const canvas = document.getElementById('preview-canvas');
+
+    window.handleFileSelect = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      currentVideoFile = file;
+      video.src = URL.createObjectURL(file);
+      video.onloadedmetadata = () => {
+        document.getElementById('export-btn').disabled = false;
+        document.getElementById('detect-btn').disabled = false;
+        activeClip = { start: 0, end: Math.min(video.duration, 30) };
+        startPreviewLoop();
+      };
+    };
+
+    window.runHighlightDetection = async () => {
+      if (!currentVideoFile) return;
+      const listEl = document.getElementById('clips-list');
+      listEl.innerHTML = '<p style="font-size:12px;color:#A78BFA;">Analyzing audio energy waves...</p>';
+      
+      const clips = await HighlightDetector.detectHighlights(currentVideoFile, { clipMinSeconds: 15, clipMaxSeconds: 45 });
+      listEl.innerHTML = '';
+      
+      clips.forEach((c, idx) => {
+        const item = document.createElement('div');
+        item.className = `clip-item ${idx === 0 ? 'active' : ''}`;
+        item.innerHTML = `
+          <div class="clip-info">
+            <strong>${c.label}</strong>
+            <span>${c.start}s - ${c.end}s (${c.duration}s cut)</span>
+          </div>
+          <span class="clip-score">${c.score} HYPE</span>
+        `;
+        item.onclick = () => {
+          document.querySelectorAll('.clip-item').forEach(el => el.classList.remove('active'));
+          item.classList.add('active');
+          activeClip = { start: c.start, end: c.end };
+          video.currentTime = c.start;
+        };
+        listEl.appendChild(item);
+      });
+
+      if (clips.length > 0) {
+        activeClip = { start: clips[0].start, end: clips[0].end };
+        video.currentTime = clips[0].start;
+      }
+    };
+
+    window.setLayout = (layout, btn) => {
+      selectedLayout = layout;
+      document.querySelectorAll('[data-layout]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    };
+
+    window.setSubtitleStyle = (style, btn) => {
+      selectedStyle = style;
+      document.querySelectorAll('[data-style]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    };
+
+    function startPreviewLoop() {
+      video.play();
+      const draw = () => {
+        if (!video.paused && !video.ended) {
+          if (video.currentTime >= activeClip.end) {
+            video.currentTime = activeClip.start;
+          }
+          engine.renderFrame(video, selectedLayout, {
+            captionText: 'WAIT FOR THE REACTION',
+            captionStyle: selectedStyle
+          });
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(engine.canvas, 0, 0, canvas.width, canvas.height);
+        }
+        requestAnimationFrame(draw);
+      };
+      draw();
+    }
+
+    window.handleExport = async () => {
+      const exportBtn = document.getElementById('export-btn');
+      const progressContainer = document.getElementById('progress-container');
+      const progressFill = document.getElementById('progress-fill');
+
+      exportBtn.disabled = true;
+      exportBtn.textContent = 'Rendering Clip...';
+      progressContainer.style.display = 'block';
+
+      try {
+        const blob = await engine.exportClip(
+          video,
+          activeClip.start,
+          activeClip.end,
+          { layout: selectedLayout, captionStyle: selectedStyle, captionText: 'WAIT FOR THE REACTION' },
+          (prog) => {
+            progressFill.style.width = `${Math.round(prog * 100)}%`;
+          }
+        );
+
+        // Download rendered MP4
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `nyxclip-${Date.now()}.mp4`;
+        a.click();
+      } catch (err) {
+        alert('Export failed: ' + err.message);
+      } finally {
+        exportBtn.disabled = false;
+        exportBtn.textContent = '💾 Export 9:16 Video (.mp4)';
+        progressContainer.style.display = 'none';
+      }
+    };
+
+    window.openSettings = () => {
+      const { groqKey, geminiKey } = ByokService.getKeys();
+      const groq = prompt('Enter free Groq API Key (for whisper-large-v3-turbo captions):', groqKey);
+      if (groq !== null) ByokService.setKeys(groq, geminiKey);
+      const gemini = prompt('Enter Google Gemini API Key (for viral hook generation):', geminiKey);
+      if (gemini !== null) ByokService.setKeys(groq || groqKey, gemini);
+    };
+  </script>
+</body>
+</html>

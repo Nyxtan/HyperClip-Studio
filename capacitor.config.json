@@ -1,0 +1,9 @@
+{
+  "appId": "com.nyxclip.studio",
+  "appName": "NyxClip Studio",
+  "webDir": ".",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}
